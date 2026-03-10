@@ -7,5 +7,11 @@
     "yearly_return_profit": 8336
   },
   "trade_records": [],
-  "symbol_profit_tracker": {}
+  "symbol_profit_tracker": {},
+  "profit_curve_data": {
+    "initial_funds": 15911.0,
+    "yearly_initial_funds": 26664.0,
+    "monthly_profits": [0, 1200, 800, -500, 1500, 2000, -300, 1800],
+    "months": ["2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03"]
+  }
 }

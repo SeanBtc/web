@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BStrategy运行面板</title>
+    <title>BStrategy之家</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%233b82f6' d='M16 2L2 8v16l14 6 14-6V8L16 2zm0 22l-8-3v-10l8-4 8 4v10l-8 3z'/%3E%3Cpath fill='%23ffffff' d='M16 8l-6 2.5v9L16 22l6-2.5v-9L16 8z'/%3E%3Cpath fill='%233b82f6' d='M16 10l-4 1.5v6L16 20l4-1.5v-6L16 10z'/%3E%3C/svg%3E" type="image/svg+xml">
+    <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%233b82f6' d='M16 2L2 8v16l14 6 14-6V8L16 2zm0 22l-8-3v-10l8-4 8 4v10l-8 3z'/%3E%3Cpath fill='%23ffffff' d='M16 8l-6 2.5v9L16 22l6-2.5v-9L16 8z'/%3E%3Cpath fill='%233b82f6' d='M16 10l-4 1.5v6L16 20l4-1.5v-6L16 10z'/%3E%3C/svg%3E" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -108,7 +111,8 @@
         <section class="mb-12">
             <div class="bg-white rounded-xl shadow-md p-6">
                 <h3 class="text-xl font-semibold text-dark mb-4">策略盈亏摘要</h3>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <p class="text-gray-600 mb-3">起点:2025-8</p>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
                     <div class="bg-gray-50 rounded-lg p-3">
                         <div class="text-xs text-gray-500 mb-1">当前总资金</div>
                         <div class="text-lg font-bold text-dark" id="total-margin">0.00 USDT</div>
@@ -129,6 +133,84 @@
                         <div class="text-xs text-gray-500 mb-1">本年净收益</div>
                         <div class="text-lg font-bold text-green-600" id="yearly-return-profit">0.00 USDT</div>
                     </div>
+                </div>
+                
+
+            </div>
+        </section>
+
+        <!-- 套利策略模块 -->
+        <section class="mb-12 bg-gray-100 rounded-xl p-6">
+            <div class="mb-6">
+                <div class="flex items-center mb-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fa fa-exchange text-secondary text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-dark">套利策略</h3>
+                </div>
+                <p class="text-gray-600 mb-3">利用资金费率差异进行套利交易，获取稳定收益。</p>
+                <div class="flex items-center mb-4">
+                    <span class="text-xs font-medium text-gray-500 mr-2">状态:</span>
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold" id="arbitrage-status">运行</span>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h4 class="text-lg font-semibold text-dark mb-4">套利策略盈亏</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <div class="text-xs text-gray-500 mb-1">初始总资金</div>
+                        <div class="text-lg font-bold text-dark" id="arbitrage-initial-funds">1000.00 USDT</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <div class="text-xs text-gray-500 mb-1">累计净收益</div>
+                        <div class="text-lg font-bold text-green-600" id="arbitrage-total-net-profit">0.00 USDT</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <div class="text-xs text-gray-500 mb-1">累计总收益率</div>
+                        <div class="text-lg font-bold text-green-600" id="arbitrage-total-return-rate">0.00%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h4 class="text-lg font-semibold text-dark mb-4">交易记录</h4>
+                <div class="table-container overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    时间
+                                </th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    交易对
+                                </th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    方向
+                                </th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    USDT价值
+                                </th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    开仓价格
+                                </th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    平仓价格
+                                </th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    净收益
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="arbitrage-tbody">
+                            <tr>
+                                <td colspan="6" class="px-3 py-4 text-center text-gray-500">
+                                    <i class="fa fa-info-circle text-lg mb-1"></i>
+                                    <p>暂无交易记录</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -203,82 +285,6 @@
                         <tbody class="bg-white divide-y divide-gray-200" id="tradingview-tbody">
                             <tr>
                                 <td colspan="7" class="px-3 py-4 text-center text-gray-500">
-                                    <i class="fa fa-info-circle text-lg mb-1"></i>
-                                    <p>暂无交易记录</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- 套利策略模块 -->
-        <section class="mb-12 bg-gray-100 rounded-xl p-6">
-            <div class="mb-6">
-                <div class="flex items-center mb-3">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                        <i class="fa fa-exchange text-secondary text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-dark">套利策略</h3>
-                </div>
-                <p class="text-gray-600 mb-3">利用资金费率差异进行套利交易，获取稳定收益。</p>
-                <div class="flex items-center mb-4">
-                    <span class="text-xs font-medium text-gray-500 mr-2">状态:</span>
-                    <span class="px-2 py-1 rounded-full text-xs font-semibold" id="arbitrage-status">运行</span>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-                <h4 class="text-lg font-semibold text-dark mb-4">套利策略盈亏</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="bg-gray-50 rounded-lg p-3">
-                        <div class="text-xs text-gray-500 mb-1">初始总资金</div>
-                        <div class="text-lg font-bold text-dark" id="arbitrage-initial-funds">1000.00 USDT</div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-3">
-                        <div class="text-xs text-gray-500 mb-1">累计净收益</div>
-                        <div class="text-lg font-bold text-green-600" id="arbitrage-total-net-profit">0.00 USDT</div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-3">
-                        <div class="text-xs text-gray-500 mb-1">累计总收益率</div>
-                        <div class="text-lg font-bold text-green-600" id="arbitrage-total-return-rate">0.00%</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h4 class="text-lg font-semibold text-dark mb-4">交易记录</h4>
-                <div class="table-container overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    时间
-                                </th>
-                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    交易对
-                                </th>
-                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    方向
-                                </th>
-                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    USDT价值
-                                </th>
-                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    开仓价格
-                                </th>
-                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    平仓价格
-                                </th>
-                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    净收益
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="arbitrage-tbody">
-                            <tr>
-                                <td colspan="6" class="px-3 py-4 text-center text-gray-500">
                                     <i class="fa fa-info-circle text-lg mb-1"></i>
                                     <p>暂无交易记录</p>
                                 </td>
@@ -463,10 +469,11 @@
     <footer class="bg-dark text-white py-6 mt-10">
         <div class="container mx-auto px-4">
             <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="flex space-x-3">
-                    <a href="#" class="text-gray-400 hover:text-white"><i class="fa fa-github text-lg"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white"><i class="fa fa-envelope text-lg"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white"><i class="fa fa-telegram text-lg"></i></a>
+                <div class="flex items-center space-x-3">
+                    <span class="text-white mr-2">加入我们</span>
+                    <a href="/data/qq.png" class="text-gray-400 hover:text-white" target="_blank"><i class="fa fa-qq text-lg"></i></a>
+                    <a href="https://x.com/xiangyong1521" class="text-gray-400 hover:text-white" target="_blank"><i class="fa fa-twitter text-lg"></i></a>
+                    <a href="https://weibo.com/seanbtc" class="text-gray-400 hover:text-white" target="_blank"><i class="fa fa-weibo text-lg"></i></a>
                 </div>
             </div>
             <div class="border-t border-gray-700 mt-4 pt-4 text-center text-gray-400 text-sm">
@@ -484,6 +491,40 @@
         let arbitrageDisplayCount = 5;
         let topBottomDisplayCount = 5;
         let spotDisplayCount = 5;
+        
+        // 处理所有数据更新
+        socket.on('all_data', function(data) {
+            console.log('收到数据更新:', data);
+            
+
+            
+            // 更新顶部策略盈亏摘要
+            updateTopSummary(data);
+            
+            // 更新套利策略数据
+            if (data.arbitrage) {
+                updateArbitrageSummary(data.arbitrage);
+                updateArbitrageTable(data.arbitrage);
+            }
+            
+            // 更新TradingView策略数据
+            if (data.tradingview_summary) {
+                updateTradingViewSummary(data.tradingview_summary);
+            }
+            if (data.tradingview) {
+                updateTradingViewTable(data.tradingview);
+            }
+            
+            // 更新摸顶抄底策略数据
+            updateTopBottomData(data);
+            updateTopBottomTable(data);
+            
+            // 更新策略状态
+            updateStrategyStatus(data);
+            
+            // 更新市场数据
+            updateMarketData(data);
+        });
         
         // 更新TradingView交易记录表格
         function updateTradingViewTable(data) {
@@ -803,9 +844,16 @@
                 }
             }
             
-            // 不更新BTC价格，保留通过API获取的真实价格
-            // 这样可以避免WebSocket数据覆盖真实价格
+            // 更新BTC价格
+            if (marketData.btc_price) {
+                const priceElement = document.getElementById('btc-price');
+                if (priceElement) {
+                    priceElement.textContent = '$' + parseFloat(marketData.btc_price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+            }
         }
+        
+
         
         // 更新摸顶抄底策略数据
         function updateTopBottomData(data) {
@@ -1087,39 +1135,6 @@
             }
         }
         
-        // 定期获取BTC价格
-        function fetchBtcPrice() {
-            // 使用Binance API获取BTC/USDT价格
-            fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.price) {
-                        const price = parseFloat(data.price);
-                        const priceElement = document.getElementById('btc-price');
-                        if (priceElement) {
-                            priceElement.textContent = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                            
-                            // 价格更新后重新计算浮盈
-                            // 获取策略数据
-                            fetch('/api/get_data')
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.top_bottom) {
-                                        calculateFloatProfit(data.top_bottom);
-                                    }
-                                    if (data.spot) {
-                                        calculateSpotFloatProfit(data.spot);
-                                    }
-                                })
-                                .catch(error => console.error('获取数据失败:', error));
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('获取BTC价格失败:', error);
-                });
-        }
-        
         // 更新当前时间
         function updateCurrentTime() {
             const now = new Date();
@@ -1141,26 +1156,7 @@
         // 页面加载时更新时间
         window.addEventListener('load', updateCurrentTime);
         
-        // 每30秒更新一次BTC价格
-        setInterval(fetchBtcPrice, 30000);
-        
-        // 页面加载时获取一次BTC价格
-        window.addEventListener('load', fetchBtcPrice);
-        
-        // 接收数据更新
-        socket.on('all_data', function(data) {
-            updateTradingViewTable(data.tradingview);
-            updateTradingViewSummary(data.tradingview_summary || {});
-            updateArbitrageTable(data.arbitrage);
-            updateArbitrageSummary(data.arbitrage);
-            updateStrategyStatus(data);
-            updateMarketData(data);
-            updateTopBottomData(data);
-            updateTopBottomTable(data);
-            updateSpotData(data);
-            updateSpotTable(data);
-            updateTopSummary(data);
-        })
+
         
         // 页面加载时获取初始数据
         window.onload = function() {
