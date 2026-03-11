@@ -100,8 +100,11 @@
                     <span class="text-sm font-bold text-dark" id="btc-price">$68,888.00</span>
                 </div>
             </div>
-            <div class="flex items-center">
+            <div class="flex items-center space-x-6">
                 <div class="text-sm font-semibold text-gray-700" id="current-time"></div>
+                <div class="text-sm font-semibold">
+                    <span id="runtime" class="bg-green-100 text-green-800 px-3 py-1 rounded-full">策略已运行: 0天</span>
+                </div>
             </div>
         </div>
     </header>
@@ -111,7 +114,6 @@
         <section class="mb-12">
             <div class="bg-white rounded-xl shadow-md p-6">
                 <h3 class="text-xl font-semibold text-dark mb-4">策略盈亏摘要</h3>
-                <p class="text-gray-600 mb-3">起点:2025年3月</p>
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
                     <div class="bg-gray-50 rounded-lg p-3">
                         <div class="text-xs text-gray-500 mb-1">当前总资金</div>
@@ -178,7 +180,8 @@
             </div>
             
             <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-                <h4 class="text-lg font-semibold text-dark mb-4">套利策略盈亏</h4>
+                <h4 class="text-lg font-semibold text-dark mb-4">本次套利策略盈亏</h4>
+                <p class="text-gray-600 mb-3" id="arbitrage-start-time">2026年3月11日 至今</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div class="bg-gray-50 rounded-lg p-3">
                         <div class="text-xs text-gray-500 mb-1">初始总资金</div>
@@ -511,6 +514,34 @@
         let topBottomDisplayCount = 5;
         let spotDisplayCount = 5;
         
+        // 运行时长计算
+        function updateRuntime() {
+            // 开始时间：2025年3月13日
+            const startTime = new Date('2025-03-13T00:00:00');
+            const now = new Date();
+            
+            // 计算时间差（毫秒）
+            const diffMs = now - startTime;
+            
+            // 计算总天数
+            const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            // 构建运行时长字符串
+            const runtimeString = `已运行: ${totalDays}天`;
+            
+            // 更新页面显示
+            const runtimeElement = document.getElementById('runtime');
+            if (runtimeElement) {
+                runtimeElement.textContent = runtimeString;
+            }
+        }
+        
+        // 每秒更新运行时长
+        setInterval(updateRuntime, 1000);
+        
+        // 页面加载时立即更新一次
+        window.addEventListener('load', updateRuntime);
+        
         // 盈利曲线图表实例
         let profitCurveChart = null;
         let yearlyProfitCurveChart = null;
@@ -519,7 +550,13 @@
         socket.on('all_data', function(data) {
             console.log('收到数据更新:', data);
             
-
+            // 更新套利策略启动时间
+            if (data.arbitrage_start_time) {
+                const start_time_element = document.getElementById('arbitrage-start-time');
+                if (start_time_element) {
+                    start_time_element.textContent = `${data.arbitrage_start_time} 至今`;
+                }
+            }
             
             // 更新顶部策略盈亏摘要
             updateTopSummary(data);

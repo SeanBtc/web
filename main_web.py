@@ -140,6 +140,28 @@ def save_tradingview_data(data):
     except Exception as e:
         print(f"保存TradingView策略数据失败: {e}")
 
+# 从本地文件读取套利策略数据
+def load_arbitrage_data():
+    file_path = os.path.join(data_dir, 'arbitrage_trades.json')
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data
+        except Exception as e:
+            print(f"读取套利策略数据失败: {e}")
+    return {
+        'profit_summary': {
+            'total_net_profit': 0.0,
+            'total_margin': 0.0,
+            'total_return_rate': 0.0,
+            'yearly_return_rate': 0.0,
+            'yearly_return_profit': 0.0,
+            'initial_funds': 0.0
+        },
+        'trade_records': [],
+    }
+
 # 保存套利策略数据到本地文件
 def save_arbitrage_data(data):
     file_path = os.path.join(data_dir, 'arbitrage_trades.json')
@@ -156,10 +178,12 @@ def check_file_updates():
     spot_file_path = os.path.join(data_dir, 'spot_trades.json')
     total_profit_file_path = os.path.join(data_dir, 'total_profit.json')
     tradingview_file_path = os.path.join(data_dir, 'tradingview_trades.json')
+    arbitrage_file_path = os.path.join(data_dir, 'arbitrage_trades.json')
     last_modified_top_bottom = 0
     last_modified_spot = 0
     last_modified_total_profit = 0
     last_modified_tradingview = 0
+    last_modified_arbitrage = 0
     
     while True:
         try:
@@ -236,6 +260,20 @@ def check_file_updates():
                     socketio.emit('all_data', data_storage.get_all_data())
                     print("TradingView策略数据已更新")
             
+            # 检查套利策略数据文件
+            if os.path.exists(arbitrage_file_path):
+                current_modified = os.path.getmtime(arbitrage_file_path)
+                if current_modified > last_modified_arbitrage:
+                    last_modified_arbitrage = current_modified
+                    # 重新加载数据
+                    new_data = load_arbitrage_data()
+                    # 更新套利策略数据
+                    data_storage.arbitrage_data = new_data
+                    data_storage.update_global_data()
+                    # 广播更新
+                    socketio.emit('all_data', data_storage.get_all_data())
+                    print("套利策略数据已更新")
+            
             # 每5秒检查一次
             time.sleep(5)
         except Exception as e:
@@ -249,18 +287,8 @@ top_bottom_file_data = load_top_bottom_data()
 spot_file_data = load_spot_data()
 # 加载总仓盈亏数据
 total_profit_data = load_total_profit_data()
-# 套利策略数据 - 使用默认空数据结构，完全依赖在线数据
-arbitrage_data = {
-    'profit_summary': {
-        'total_net_profit': 0.0,
-        'total_margin': 0.0,
-        'total_return_rate': 0.0,
-        'yearly_return_rate': 0.0,
-        'yearly_return_profit': 0.0,
-        'initial_funds': 0.0
-    },
-    'trade_records': [],
-}
+# 加载套利策略数据
+arbitrage_data = load_arbitrage_data()
 # 加载TradingView策略数据
 tradingview_data = load_tradingview_data()
 tradingview_trade_records = tradingview_data.get('trade_records', [])
@@ -347,6 +375,7 @@ class DataStorage:
         self.spot_data = global_data['spot_data']
         self.strategy_status = global_data['strategy_status']
         self.market_data = global_data['market_data']
+        self.arbitrage_start_time = None  # 套利策略启动时间
     
     def update_global_data(self):
         global global_data
@@ -358,6 +387,7 @@ class DataStorage:
         global_data['spot_data'] = self.spot_data
         global_data['strategy_status'] = self.strategy_status
         global_data['market_data'] = self.market_data
+        global_data['arbitrage_start_time'] = self.arbitrage_start_time
     
     def add_tradingview_trade(self, trade_data):
         trade_data['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
@@ -385,9 +415,45 @@ class DataStorage:
         })
     
     def update_arbitrage_data(self, data):
+        # 处理套利策略启动时间
+        if 'start_time' in data:
+            # 检查本地文件中是否已有起始时间和盈亏数据
+            arbitrage_data_file = os.path.join(data_dir, 'arbitrage_trades.json')
+            if os.path.exists(arbitrage_data_file):
+                try:
+                    with open(arbitrage_data_file, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                    
+                    # 如果文件中已有起始时间，使用旧的起始时间
+                    if 'start_time' in existing_data:
+                        self.arbitrage_start_time = existing_data['start_time']
+                        print(f"✅ 套利策略已存在起始时间：{self.arbitrage_start_time}")
+                    else:
+                        # 文件中没有起始时间，使用新的起始时间
+                        self.arbitrage_start_time = data['start_time']
+                        # 更新文件中的起始时间
+                        existing_data['start_time'] = self.arbitrage_start_time
+                        with open(arbitrage_data_file, 'w', encoding='utf-8') as f:
+                            json.dump(existing_data, f, ensure_ascii=False, indent=2)
+                        print(f"✅ 套利策略起始时间已添加：{self.arbitrage_start_time}")
+                    
+                    # 加载旧的盈亏数据作为初始值
+                    if 'profit_summary' in existing_data:
+                        self.arbitrage_data['profit_summary'] = existing_data['profit_summary']
+                        print(f"✅ 套利策略盈亏数据已加载：总盈亏 {existing_data['profit_summary'].get('total_net_profit', 0.0):.4f} USDT")
+                except Exception as e:
+                    print(f"⚠️ 读取套利策略数据文件异常：{e}")
+                    # 读取失败时使用新的起始时间
+                    self.arbitrage_start_time = data['start_time']
+            else:
+                # 文件不存在，使用新的起始时间
+                self.arbitrage_start_time = data['start_time']
+        
+        # 处理盈亏数据
         if 'profit_summary' in data:
-            # 直接使用传过来的profit_summary数据，不做处理
+            # 直接使用传过来的profit_summary数据，因为它已经是累计值
             self.arbitrage_data['profit_summary'] = data['profit_summary']
+            print(f"✅ 套利策略盈亏数据已更新：总盈亏 {data['profit_summary'].get('total_net_profit', 0.0):.4f} USDT")
         
         new_records = []
         
@@ -535,7 +601,8 @@ class DataStorage:
             'top_bottom': self.top_bottom_data,
             'spot': self.spot_data,
             'strategy_status': self.strategy_status,
-            'market_data': self.market_data
+            'market_data': self.market_data,
+            'arbitrage_start_time': self.arbitrage_start_time
         }
 
 # 初始化数据存储
