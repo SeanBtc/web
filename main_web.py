@@ -110,6 +110,16 @@ def save_tradingview_data(data):
     except Exception as e:
         print(f"保存TradingView策略数据失败: {e}")
 
+# 保存套利策略数据到本地文件
+def save_arbitrage_data(data):
+    file_path = os.path.join(data_dir, 'arbitrage_trades.json')
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print("套利策略数据已保存")
+    except Exception as e:
+        print(f"保存套利策略数据失败: {e}")
+
 # 定期检查文件更新的函数
 def check_file_updates():
     top_bottom_file_path = os.path.join(data_dir, 'top_bottom_trades.json')
@@ -349,21 +359,69 @@ class DataStorage:
         if 'profit_summary' in data:
             # 直接使用传过来的profit_summary数据，不做处理
             self.arbitrage_data['profit_summary'] = data['profit_summary']
-        if 'trade_records' in data:
+        
+        new_records = []
+        
+        if 'trade_details' in data:
+            # 从trade_details中提取交易记录信息
+            trade_details = data['trade_details']
+            for detail in trade_details:
+                # 构建交易记录
+                # 只添加卖单的交易记录
+                # 这里假设当close_avg_price > open_avg_price时是卖单
+                if detail['close_avg_price'] > detail['open_avg_price']:
+                    record = {
+                        'symbol': detail['symbol'],
+                        'open_side': 'SELL',
+                        'quantity': detail['open_executed_qty'],
+                        'open_price': detail['open_avg_price'],
+                        'close_price': detail['close_avg_price'],
+                        'net_profit': detail['net_profit'],
+                        'timestamp': detail['open_time_cn']
+                    }
+                    new_records.append(record)
+        elif 'trade_records' in data:
             # 为每条交易记录添加时间戳
-            new_records = data['trade_records']
+            for record in data['trade_records']:
+                # 只添加卖单的交易记录
+                if record.get('open_side') == 'SELL':
+                    if 'timestamp' not in record:
+                        # 使用更精确的时间戳，包含毫秒
+                        record['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S.%f')[:-3]
+                        # 添加微小延迟，确保时间戳不同
+                        time.sleep(0.001)
+                    new_records.append(record)
+        
+        # 去重处理：根据关键信息组合生成唯一标识符
+        if new_records:
+            # 先获取现有记录的唯一标识符集合
+            existing_ids = set()
+            for record in self.arbitrage_data['trade_records']:
+                # 使用交易对、时间戳、开仓价格、平仓价格和净利润组合作为唯一标识符
+                record_id = f"{record.get('symbol', '')}_{record.get('timestamp', '')}_{record.get('open_price', '')}_{record.get('close_price', '')}_{record.get('net_profit', '')}"
+                existing_ids.add(record_id)
+            
+            # 过滤掉重复的新记录
+            unique_new_records = []
             for record in new_records:
-                if 'timestamp' not in record:
-                    record['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-            # 将新记录插入到列表开头，实现时间从近到远显示
-            for record in reversed(new_records):
-                self.arbitrage_data['trade_records'].insert(0, record)
-            # 限制存储的记录数量，保持文件大小合理
-            if len(self.arbitrage_data['trade_records']) > 100:
-                self.arbitrage_data['trade_records'] = self.arbitrage_data['trade_records'][:100]
+                record_id = f"{record.get('symbol', '')}_{record.get('timestamp', '')}_{record.get('open_price', '')}_{record.get('close_price', '')}_{record.get('net_profit', '')}"
+                if record_id not in existing_ids:
+                    unique_new_records.append(record)
+                    existing_ids.add(record_id)
+            
+            # 将唯一的新记录添加到现有列表中
+            if unique_new_records:
+                self.arbitrage_data['trade_records'].extend(unique_new_records)
+                # 限制存储的记录数量，保持文件大小合理
+                if len(self.arbitrage_data['trade_records']) > 100:
+                    self.arbitrage_data['trade_records'] = self.arbitrage_data['trade_records'][-100:]
+        
         if 'symbol_loss_tracker' in data:
             self.arbitrage_data['symbol_loss_tracker'] = data['symbol_loss_tracker']
+        
         self.update_global_data()
+        # 保存套利策略数据到本地文件
+        save_arbitrage_data(self.arbitrage_data)
     
     def update_strategy_status(self, strategy, status):
         if strategy in self.strategy_status:
