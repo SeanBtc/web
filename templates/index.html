@@ -54,34 +54,96 @@
             }
         }
         body {
-            font-size: 0.8rem;
+            font-size: 0.84rem;
+            color: #0f172a;
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.10), transparent 0, transparent 26%),
+                radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 0, transparent 22%),
+                linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
+        }
+        header {
+            backdrop-filter: blur(14px);
+            background: rgba(255, 255, 255, 0.92) !important;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.9);
         }
         h1 {
-            font-size: 1.5rem;
-        }
-        h2 {
             font-size: 1.3rem;
         }
+        h2 {
+            font-size: 1.15rem;
+        }
         h3 {
-            font-size: 1.1rem;
-        }
-        .text-2xl {
-            font-size: 1.25rem;
-        }
-        .text-xl {
-            font-size: 1.125rem;
-        }
-        .text-lg {
             font-size: 1rem;
         }
+        .text-2xl {
+            font-size: 1.1rem;
+        }
+        .text-xl {
+            font-size: 1rem;
+        }
+        .text-lg {
+            font-size: 0.95rem;
+        }
         .text-md {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .text-sm {
             font-size: 0.75rem;
         }
         .text-xs {
             font-size: 0.675rem;
+        }
+        .panel-shell,
+        #arbitrage-section,
+        #tradingview-section,
+        #spot-section,
+        #top-bottom-section {
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+        #arbitrage-section,
+        #tradingview-section,
+        #spot-section,
+        #top-bottom-section {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 100%);
+        }
+        #arbitrage-section::before,
+        #tradingview-section::before,
+        #spot-section::before,
+        #top-bottom-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+        #arbitrage-section::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        #tradingview-section::before {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
+        #spot-section::before {
+            background: linear-gradient(90deg, #a855f7, #c084fc);
+        }
+        #top-bottom-section::before {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+        .panel-shell .bg-gray-50,
+        #arbitrage-section .bg-gray-50,
+        #tradingview-section .bg-gray-50,
+        #spot-section .bg-gray-50,
+        #top-bottom-section .bg-gray-50 {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid rgba(226, 232, 240, 0.85);
+        }
+        .table-container thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
 
         @media (max-width: 1199px), (max-aspect-ratio: 5/4) {
@@ -118,7 +180,7 @@
 
         @media (min-width: 1200px) and (min-aspect-ratio: 5/4) {
             :root {
-                --layout-gutter: 0.45rem;
+                --layout-gutter: 0.95rem;
             }
 
             html,
@@ -137,15 +199,43 @@
             }
 
             header .py-3 {
-                padding-top: 0.35rem;
-                padding-bottom: 0.35rem;
+                padding-top: 0.45rem;
+                padding-bottom: 0.45rem;
             }
 
             header .container {
                 width: calc(100vw - (var(--layout-gutter) * 2));
                 max-width: none;
-                padding-left: 0;
-                padding-right: 0;
+                padding-left: 0.15rem;
+                padding-right: 0.15rem;
+                min-height: 3rem;
+                font-size: 0.78rem;
+                line-height: 1.1rem;
+            }
+
+            header .space-x-6 {
+                column-gap: 0.9rem !important;
+            }
+
+            header .mb-3 {
+                margin-bottom: 0 !important;
+            }
+
+            header .mr-6 {
+                margin-right: 0.8rem !important;
+            }
+
+            #market-cycle,
+            #runtime {
+                padding: 0.1rem 0.45rem !important;
+                font-size: 0.72rem !important;
+                line-height: 1rem !important;
+            }
+
+            #btc-price,
+            #current-time {
+                font-size: 0.8rem !important;
+                line-height: 1rem;
             }
 
             #dashboard-main {
@@ -158,10 +248,61 @@
                 padding-right: 0 !important;
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, 1fr));
-                grid-template-rows: 0.9fr 1.5fr 1.5fr 0.5fr;
+                grid-template-rows: auto minmax(0, 1.65fr) minmax(0, 1.65fr) minmax(2.4rem, auto);
                 gap: var(--layout-gutter);
-                overflow: hidden;
+                overflow-x: hidden;
+                overflow-y: auto;
                 align-content: stretch;
+            }
+
+            #dashboard-main .p-6 {
+                padding: 0.8rem !important;
+            }
+
+            #dashboard-main .p-4 {
+                padding: 0.65rem !important;
+            }
+
+            #dashboard-main .p-3 {
+                padding: 0.5rem !important;
+            }
+
+            #dashboard-main .mb-6 {
+                margin-bottom: 0.7rem !important;
+            }
+
+            #dashboard-main .mb-4 {
+                margin-bottom: 0.5rem !important;
+            }
+
+            #dashboard-main .mb-3 {
+                margin-bottom: 0.38rem !important;
+            }
+
+            #dashboard-main .text-xl {
+                font-size: 0.98rem;
+                line-height: 1.22rem;
+            }
+
+            #dashboard-main .text-lg {
+                font-size: 0.88rem;
+                line-height: 1.15rem;
+            }
+
+            #dashboard-main .text-md {
+                font-size: 0.78rem;
+                line-height: 1.05rem;
+            }
+
+            #dashboard-main .text-xs {
+                font-size: 0.62rem;
+                line-height: 0.9rem;
+            }
+
+            #dashboard-main table th,
+            #dashboard-main table td {
+                padding-top: 0.22rem !important;
+                padding-bottom: 0.22rem !important;
             }
 
             .panel-section {
@@ -172,7 +313,7 @@
             #summary-section {
                 grid-column: 2;
                 grid-row: 1;
-                overflow: hidden;
+                overflow: visible;
             }
 
             #total-curve-section {
@@ -249,7 +390,7 @@
             #tradingview-section,
             #spot-section,
             #top-bottom-section {
-                padding: 0.6rem;
+                padding: 0.5rem;
             }
 
             #arbitrage-section > .mb-6,
@@ -278,7 +419,7 @@
             #spot-section .bg-white.p-6,
             #top-bottom-section .bg-white.p-6,
             #report-section .p-6 {
-                padding: 0.55rem !important;
+                padding: 0.46rem !important;
             }
 
             .record-card {
@@ -292,7 +433,38 @@
             }
 
             #summary-section .grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                min-width: 0;
+                gap: 0.55rem;
+            }
+
+            #summary-section .panel-shell {
+                height: auto !important;
+                padding-top: 0.65rem !important;
+                padding-bottom: 0.65rem !important;
+                overflow: hidden;
+            }
+
+            #summary-section .bg-gray-50 {
+                min-width: 0;
+            }
+
+            #summary-section .bg-gray-50 > div {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #summary-section h3 {
+                margin-bottom: 0.24rem !important;
+            }
+
+            #summary-section .mb-6 {
+                margin-bottom: 0.2rem !important;
+            }
+
+            #summary-section .bg-gray-50 {
+                padding: 0.3rem !important;
             }
 
             #total-curve-section .panel-shell,
@@ -316,8 +488,8 @@
             }
 
             #report-section .panel-shell {
-                padding-top: 0.45rem !important;
-                padding-bottom: 0.45rem !important;
+                padding-top: 0.38rem !important;
+                padding-bottom: 0.38rem !important;
             }
 
             #report-section h3 {
@@ -330,14 +502,14 @@
             }
 
             #report-section a {
-                padding-top: 0.45rem !important;
-                padding-bottom: 0.45rem !important;
+                padding-top: 0.35rem !important;
+                padding-bottom: 0.35rem !important;
             }
 
             footer {
                 margin-top: 0 !important;
-                padding-top: 0.35rem !important;
-                padding-bottom: 0.35rem !important;
+                padding-top: 0.25rem !important;
+                padding-bottom: 0.25rem !important;
             }
         }
     </style>
@@ -366,28 +538,28 @@
         </div>
     </header>
 
-    <main id="dashboard-main" class="container mx-auto px-4 py-4">
+    <main id="dashboard-main" class="container mx-auto px-4 md:px-5 py-5 md:py-6">
         <!-- 策略盈亏摘要 -->
         <section id="summary-section" class="mb-12 panel-section">
             <div class="bg-white rounded-xl shadow-md p-6 panel-shell">
                 <h3 class="text-xl font-semibold text-dark mb-4">交易系统总盈亏</h3>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
                     <!-- 隐藏当前总资金 -->
-                    <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="bg-gray-50 rounded-lg p-3 min-w-0">
                         <div class="text-xs text-gray-500 mb-1">累计净收益</div>
-                        <div class="text-lg font-bold text-green-600" id="total-net-profit">$0.00</div>
+                        <div class="text-lg font-bold text-green-600 break-all" id="total-net-profit">$0.00</div>
                     </div>
-                    <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="bg-gray-50 rounded-lg p-3 min-w-0">
                         <div class="text-xs text-gray-500 mb-1">总收益率</div>
-                        <div class="text-lg font-bold text-green-600" id="total-return-rate">0.00%</div>
+                        <div class="text-lg font-bold text-green-600 break-all" id="total-return-rate">0.00%</div>
                     </div>
-                    <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="bg-gray-50 rounded-lg p-3 min-w-0">
                         <div class="text-xs text-gray-500 mb-1">本年收益率</div>
-                        <div class="text-lg font-bold text-green-600" id="yearly-return-rate">0.00%</div>
+                        <div class="text-lg font-bold text-green-600 break-all" id="yearly-return-rate">0.00%</div>
                     </div>
-                     <div class="bg-gray-50 rounded-lg p-3">
+                     <div class="bg-gray-50 rounded-lg p-3 min-w-0">
                         <div class="text-xs text-gray-500 mb-1">本年净收益</div>
-                        <div class="text-lg font-bold text-green-600" id="yearly-return-profit">$0.00</div>
+                        <div class="text-lg font-bold text-green-600 break-all" id="yearly-return-profit">$0.00</div>
                     </div>
                 </div>
             </div>
@@ -841,13 +1013,6 @@
         // WebSocket连接
         const socket = io();
         
-        // 全局变量，用于存储当前显示的记录数量
-        let tradingViewDisplayCount = 5;
-        let tradingViewRoundDisplayCount = 5;
-        let arbitrageDisplayCount = 5;
-        let topBottomDisplayCount = 5;
-        let spotDisplayCount = 5;
-        
         // 运行时长计算
         function updateRuntime() {
             // 开始时间：2025年3月13日
@@ -879,6 +1044,7 @@
         // 盈利曲线图表实例
         let profitCurveChart = null;
         let yearlyProfitCurveChart = null;
+        const MAX_DISPLAY_RECORDS = 100;
         
         // 处理所有数据更新
         socket.on('all_data', function(data) {
@@ -948,8 +1114,8 @@
                 return timeB - timeA;
             });
             
-            // 显示指定数量的记录
-            const displayData = sortedData.slice(0, tradingViewDisplayCount);
+            // 仅显示最近100条，完整历史仍保留在存储中
+            const displayData = sortedData.slice(0, MAX_DISPLAY_RECORDS);
             
             tbody.innerHTML = '';
             displayData.forEach(trade => {
@@ -988,24 +1154,6 @@
                 tbody.appendChild(tr);
             });
             
-            // 添加加载更多按钮
-            if (data.length > tradingViewDisplayCount && tradingViewDisplayCount < 20) {
-                const loadMoreRow = document.createElement('tr');
-                loadMoreRow.innerHTML = `
-                    <td colspan="6" class="px-6 py-4 text-center">
-                        <button id="load-more-tradingview" class="text-primary hover:underline text-sm font-medium">
-                            加载更多记录
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(loadMoreRow);
-                
-                // 添加点击事件
-                document.getElementById('load-more-tradingview').addEventListener('click', function() {
-                    tradingViewDisplayCount = Math.min(tradingViewDisplayCount + 5, 20);
-                    updateTradingViewTable(data);
-                });
-            }
         }
 
         // 更新TradingView过去几轮盈利记录表格
@@ -1033,7 +1181,7 @@
                 return new Date(timeB) - new Date(timeA);
             });
 
-            const displayData = sortedData.slice(0, tradingViewRoundDisplayCount);
+            const displayData = sortedData.slice(0, MAX_DISPLAY_RECORDS);
             tbody.innerHTML = '';
 
             displayData.forEach(item => {
@@ -1079,22 +1227,6 @@
                 tbody.appendChild(tr);
             });
 
-            if (data.length > tradingViewRoundDisplayCount && tradingViewRoundDisplayCount < 20) {
-                const loadMoreRow = document.createElement('tr');
-                loadMoreRow.innerHTML = `
-                    <td colspan="6" class="px-6 py-4 text-center">
-                        <button id="load-more-tradingview-round" class="text-primary hover:underline text-sm font-medium">
-                            加载更多记录
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(loadMoreRow);
-
-                document.getElementById('load-more-tradingview-round').addEventListener('click', function() {
-                    tradingViewRoundDisplayCount = Math.min(tradingViewRoundDisplayCount + 5, 20);
-                    updateTradingViewRoundTable(data, defaultPrincipal);
-                });
-            }
         }
         
         // 更新套利策略交易记录表格
@@ -1123,8 +1255,8 @@
                 return timeB - timeA;
             });
             
-            // 显示指定数量的记录
-            const displayTradeRecords = sortedTradeRecords.slice(0, arbitrageDisplayCount);
+            // 仅显示最近100条，完整历史仍保留在存储中
+            const displayTradeRecords = sortedTradeRecords.slice(0, MAX_DISPLAY_RECORDS);
             
             tbody.innerHTML = '';
             displayTradeRecords.forEach(trade => {
@@ -1163,24 +1295,6 @@
                 tbody.appendChild(tr);
             });
             
-            // 添加加载更多按钮
-            if (tradeRecords.length > arbitrageDisplayCount && arbitrageDisplayCount < 20) {
-                const loadMoreRow = document.createElement('tr');
-                loadMoreRow.innerHTML = `
-                    <td colspan="7" class="px-6 py-4 text-center">
-                        <button id="load-more-arbitrage" class="text-primary hover:underline text-sm font-medium">
-                            加载更多记录
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(loadMoreRow);
-                
-                // 添加点击事件
-                document.getElementById('load-more-arbitrage').addEventListener('click', function() {
-                    arbitrageDisplayCount = Math.min(arbitrageDisplayCount + 5, 20);
-                    updateArbitrageTable(data);
-                });
-            }
         }
        
         // 更新套利策略盈亏摘要
@@ -1451,8 +1565,8 @@
                 return timeB - timeA;
             });
             
-            // 显示指定数量的记录
-            const displayTradeRecords = sortedTradeRecords.slice(0, topBottomDisplayCount);
+            // 仅显示最近100条，完整历史仍保留在存储中
+            const displayTradeRecords = sortedTradeRecords.slice(0, MAX_DISPLAY_RECORDS);
             
             tbody.innerHTML = '';
             displayTradeRecords.forEach(trade => {
@@ -1478,24 +1592,6 @@
                 tbody.appendChild(tr);
             });
             
-            // 添加加载更多按钮
-            if (tradeRecords.length > topBottomDisplayCount && topBottomDisplayCount < 20) {
-                const loadMoreRow = document.createElement('tr');
-                loadMoreRow.innerHTML = `
-                    <td colspan="7" class="px-6 py-4 text-center">
-                        <button id="load-more-top-bottom" class="text-primary hover:underline text-sm font-medium">
-                            加载更多记录
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(loadMoreRow);
-                
-                // 添加点击事件
-                document.getElementById('load-more-top-bottom').addEventListener('click', function() {
-                    topBottomDisplayCount = Math.min(topBottomDisplayCount + 5, 20);
-                    updateTopBottomTable(data);
-                });
-            }
         }
         
         // 计算浮盈
@@ -1644,8 +1740,8 @@
                 return timeB - timeA;
             });
             
-            // 显示指定数量的记录
-            const displayTradeRecords = sortedTradeRecords.slice(0, spotDisplayCount);
+            // 仅显示最近100条，完整历史仍保留在存储中
+            const displayTradeRecords = sortedTradeRecords.slice(0, MAX_DISPLAY_RECORDS);
             
             tbody.innerHTML = '';
             displayTradeRecords.forEach(trade => {
@@ -1666,24 +1762,6 @@
                 tbody.appendChild(tr);
             });
             
-            // 添加加载更多按钮
-            if (tradeRecords.length > spotDisplayCount && spotDisplayCount < 20) {
-                const loadMoreRow = document.createElement('tr');
-                loadMoreRow.innerHTML = `
-                    <td colspan="6" class="px-6 py-4 text-center">
-                        <button id="load-more-spot" class="text-primary hover:underline text-sm font-medium">
-                            加载更多记录
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(loadMoreRow);
-                
-                // 添加点击事件
-                document.getElementById('load-more-spot').addEventListener('click', function() {
-                    spotDisplayCount = Math.min(spotDisplayCount + 5, 20);
-                    updateSpotTable(data);
-                });
-            }
         }
         
         // 更新当前时间

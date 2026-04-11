@@ -401,19 +401,14 @@ class DataStorage:
     
     def add_tradingview_trade(self, trade_data):
         trade_data['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-        # 插入到列表开头，实现时间从近到远显示
+        # 插入到列表开头，实现时间从近到远显示；完整历史继续保留
         self.tradingview_data.insert(0, trade_data)
-        # 限制存储的记录数量
-        if len(self.tradingview_data) > 100:
-            self.tradingview_data = self.tradingview_data[:100]
 
-        # 支持通过接口附带更新过去几轮盈利记录
+        # 支持通过接口附带更新过去几轮盈利记录，完整历史继续保留
         if isinstance(trade_data.get('round_record'), dict):
             self.tradingview_rounds.insert(0, trade_data['round_record'])
         if isinstance(trade_data.get('round_records'), list):
             self.tradingview_rounds = trade_data['round_records']
-        if len(self.tradingview_rounds) > 100:
-            self.tradingview_rounds = self.tradingview_rounds[:100]
         
         # 更新tradingview_summary数据
         if 'win_trades' in trade_data:
@@ -604,12 +599,8 @@ class DataStorage:
         if trade_data.get('is_closed'):
             trade_data['close_timestamp'] = trade_data.get('close_timestamp', datetime.now().strftime('%Y-%m-%d-%H:%M:%S'))
         
-        # 插入到列表开头，实现时间从近到远显示
+        # 插入到列表开头，实现时间从近到远显示；完整历史继续保留
         self.top_bottom_data['trade_records'].insert(0, trade_data)
-        
-        # 限制存储的记录数量
-        if len(self.top_bottom_data['trade_records']) > 100:
-            self.top_bottom_data['trade_records'] = self.top_bottom_data['trade_records'][:100]
         
         self.update_global_data()
         return True
@@ -640,12 +631,8 @@ class DataStorage:
         if trade_data.get('is_closed'):
             trade_data['close_timestamp'] = trade_data.get('close_timestamp', datetime.now().strftime('%Y-%m-%d-%H:%M:%S'))
         
-        # 插入到列表开头，实现时间从近到远显示
+        # 插入到列表开头，实现时间从近到远显示；完整历史继续保留
         self.spot_data['trade_records'].insert(0, trade_data)
-        
-        # 限制存储的记录数量
-        if len(self.spot_data['trade_records']) > 100:
-            self.spot_data['trade_records'] = self.spot_data['trade_records'][:100]
         
         self.update_global_data()
         return True
