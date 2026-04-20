@@ -25,6 +25,55 @@ def after_request(response):
     return response
 socketio = SocketIO(app, cors_allowed_origins='*')
 
+
+def _env_int(name, default):
+    """读取正整数环境变量，非法值回退默认。"""
+    raw = os.getenv(name, '')
+    try:
+        value = int(raw)
+        if value > 0:
+            return value
+    except (TypeError, ValueError):
+        pass
+    return default
+
+
+MAX_TRADINGVIEW_RECORDS = _env_int('WEB_MAX_TRADINGVIEW_RECORDS', 3000)
+MAX_TRADINGVIEW_ROUNDS = _env_int('WEB_MAX_TRADINGVIEW_ROUNDS', 1000)
+MAX_TOP_BOTTOM_RECORDS = _env_int('WEB_MAX_TOP_BOTTOM_RECORDS', 3000)
+MAX_SPOT_RECORDS = _env_int('WEB_MAX_SPOT_RECORDS', 3000)
+MAX_ARBITRAGE_RECORDS = _env_int('WEB_MAX_ARBITRAGE_RECORDS', 5000)
+MAX_PROFIT_CURVE_POINTS = _env_int('WEB_MAX_PROFIT_CURVE_POINTS', 4000)
+
+
+def _trim_list_inplace(items, limit, keep='head'):
+    """原地裁剪列表，避免历史数据无限增长。"""
+    if not isinstance(items, list) or limit <= 0:
+        return
+    if len(items) <= limit:
+        return
+    if keep == 'tail':
+        del items[:len(items) - limit]
+    else:
+        del items[limit:]
+
+
+def _trim_profit_curve_points(total_profit_data):
+    if not isinstance(total_profit_data, dict):
+        return
+    curve_data = total_profit_data.get('profit_curve_data')
+    if not isinstance(curve_data, dict):
+        return
+    points = curve_data.get('data_points')
+    _trim_list_inplace(points, MAX_PROFIT_CURVE_POINTS, keep='tail')
+
+
+def _to_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
 # 从本地文件读取摸顶抄底策略数据
 def load_top_bottom_data():
     file_path = os.path.join(data_dir, 'top_bottom_trades.json')
@@ -385,9 +434,39 @@ class DataStorage:
         self.strategy_status = global_data['strategy_status']
         self.market_data = global_data['market_data']
         self.arbitrage_start_time = None  # 套利策略启动时间
+        self._apply_memory_limits()
+
+    def _apply_memory_limits(self):
+        _trim_list_inplace(self.tradingview_data, MAX_TRADINGVIEW_RECORDS, keep='head')
+        _trim_list_inplace(self.tradingview_rounds, MAX_TRADINGVIEW_ROUNDS, keep='head')
+
+        if isinstance(self.top_bottom_data, dict):
+            _trim_list_inplace(self.top_bottom_data.get('trade_records'), MAX_TOP_BOTTOM_RECORDS, keep='head')
+        if isinstance(self.spot_data, dict):
+            _trim_list_inplace(self.spot_data.get('trade_records'), MAX_SPOT_RECORDS, keep='head')
+
+        if isinstance(self.arbitrage_data, dict):
+            records = self.arbitrage_data.get('trade_records')
+            if isinstance(records, list) and len(records) > MAX_ARBITRAGE_RECORDS:
+                summary = self.arbitrage_data.get('profit_summary')
+                if not isinstance(summary, dict):
+                    summary = {}
+                    self.arbitrage_data['profit_summary'] = summary
+
+                drop_count = len(records) - MAX_ARBITRAGE_RECORDS
+                dropped = records[:drop_count]
+                archived = _to_float(summary.get('archived_net_profit', 0.0), 0.0)
+                archived += sum(_to_float(item.get('net_profit', 0.0), 0.0) for item in dropped)
+
+                del records[:drop_count]
+                summary['archived_net_profit'] = round(archived, 4)
+                summary['retained_record_count'] = len(records)
+
+        _trim_profit_curve_points(self.total_profit_data)
     
     def update_global_data(self):
         global global_data
+        self._apply_memory_limits()
         global_data['tradingview'] = self.tradingview_data
         global_data['tradingview_rounds'] = self.tradingview_rounds
         global_data['tradingview_summary'] = self.tradingview_summary
@@ -401,10 +480,10 @@ class DataStorage:
     
     def add_tradingview_trade(self, trade_data):
         trade_data['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-        # 插入到列表开头，实现时间从近到远显示；完整历史继续保留
+        # 插入到列表开头，实现时间从近到远显示
         self.tradingview_data.insert(0, trade_data)
 
-        # 支持通过接口附带更新过去几轮盈利记录，完整历史继续保留
+        # 支持通过接口附带更新过去几轮盈利记录
         if isinstance(trade_data.get('round_record'), dict):
             self.tradingview_rounds.insert(0, trade_data['round_record'])
         if isinstance(trade_data.get('round_records'), list):
@@ -421,6 +500,8 @@ class DataStorage:
             self.tradingview_summary['total_profit_all'] = trade_data['total_profit_all']
         if 'initial_funds' in trade_data:
             self.tradingview_summary['initial_funds'] = trade_data['initial_funds']
+
+        self._apply_memory_limits()
         
         self.update_global_data()
         # 保存TradingView策略数据到本地文件
@@ -441,12 +522,6 @@ class DataStorage:
             except Exception as e:
                 print(f"⚠️ 读取套利策略数据文件异常：{e}")
 
-        def to_float(value, default=0.0):
-            try:
-                return float(value)
-            except (TypeError, ValueError):
-                return default
-
         def build_record(detail):
             symbol = detail.get('symbol', 'UNKNOWN')
             close_time = detail.get('close_time_cn') or detail.get('timestamp') or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -455,10 +530,10 @@ class DataStorage:
             return {
                 'symbol': symbol,
                 'open_side': detail.get('open_side', 'SELL'),
-                'quantity': to_float(detail.get('open_executed_qty', detail.get('quantity', 0))),
-                'open_price': to_float(detail.get('open_avg_price', detail.get('open_price', 0))),
-                'close_price': to_float(detail.get('close_avg_price', detail.get('close_price', 0))),
-                'net_profit': to_float(detail.get('net_profit', 0)),
+                'quantity': _to_float(detail.get('open_executed_qty', detail.get('quantity', 0))),
+                'open_price': _to_float(detail.get('open_avg_price', detail.get('open_price', 0))),
+                'close_price': _to_float(detail.get('close_avg_price', detail.get('close_price', 0))),
+                'net_profit': _to_float(detail.get('net_profit', 0)),
                 'timestamp': close_time,
                 'order_id': order_id
             }
@@ -482,7 +557,7 @@ class DataStorage:
         existing_summary = existing_data.get('profit_summary', {}) if isinstance(existing_data.get('profit_summary'), dict) else {}
 
         # 初始资金优先使用本地已填写值，其次才使用请求中的值
-        initial_funds = to_float(
+        initial_funds = _to_float(
             existing_summary.get(
                 'initial_funds',
                 current_summary.get('initial_funds', incoming_summary.get('initial_funds', 500.0))
@@ -517,7 +592,21 @@ class DataStorage:
             added_records += 1
             added_symbols.append(record['symbol'])
 
-        total_net_profit = sum(to_float(record.get('net_profit', 0.0)) for record in self.arbitrage_data['trade_records'])
+        archived_net_profit = _to_float(
+            current_summary.get('archived_net_profit', existing_summary.get('archived_net_profit', 0.0)),
+            0.0
+        )
+
+        # 套利记录按最新优先保留尾部，同时将被裁剪部分利润归档，保证累计收益不丢失。
+        records = self.arbitrage_data['trade_records']
+        if len(records) > MAX_ARBITRAGE_RECORDS:
+            drop_count = len(records) - MAX_ARBITRAGE_RECORDS
+            dropped_records = records[:drop_count]
+            archived_net_profit += sum(_to_float(item.get('net_profit', 0.0)) for item in dropped_records)
+            del records[:drop_count]
+
+        retained_net_profit = sum(_to_float(record.get('net_profit', 0.0)) for record in records)
+        total_net_profit = archived_net_profit + retained_net_profit
         total_margin = initial_funds + total_net_profit
         total_return_rate = (total_net_profit / initial_funds * 100) if initial_funds > 0 else 0.0
 
@@ -525,7 +614,9 @@ class DataStorage:
             'total_net_profit': round(total_net_profit, 4),
             'initial_funds': initial_funds,
             'total_margin': round(total_margin, 4),
-            'total_return_rate': round(total_return_rate, 6)
+            'total_return_rate': round(total_return_rate, 6),
+            'archived_net_profit': round(archived_net_profit, 4),
+            'retained_record_count': len(records)
         }
 
         # 非核心扩展字段只做透传，不参与总额计算
@@ -543,7 +634,7 @@ class DataStorage:
         if len(added_symbols) > 5:
             symbol_summary += f" 等{len(added_symbols)}个"
 
-        new_profit = sum(to_float(record.get('net_profit', 0.0)) for record in self.arbitrage_data['trade_records'][-added_records:]) if added_records > 0 else 0.0
+        new_profit = sum(_to_float(record.get('net_profit', 0.0)) for record in self.arbitrage_data['trade_records'][-added_records:]) if added_records > 0 else 0.0
         print(
             f"套利更新 | 收到:{len(incoming_records)} 新增:{added_records} 重复:{duplicate_records} "
             f"新增净收益:{new_profit:.4f}USDT"
@@ -599,8 +690,9 @@ class DataStorage:
         if trade_data.get('is_closed'):
             trade_data['close_timestamp'] = trade_data.get('close_timestamp', datetime.now().strftime('%Y-%m-%d-%H:%M:%S'))
         
-        # 插入到列表开头，实现时间从近到远显示；完整历史继续保留
+        # 插入到列表开头，实现时间从近到远显示
         self.top_bottom_data['trade_records'].insert(0, trade_data)
+        _trim_list_inplace(self.top_bottom_data.get('trade_records'), MAX_TOP_BOTTOM_RECORDS, keep='head')
         
         self.update_global_data()
         return True
@@ -631,8 +723,9 @@ class DataStorage:
         if trade_data.get('is_closed'):
             trade_data['close_timestamp'] = trade_data.get('close_timestamp', datetime.now().strftime('%Y-%m-%d-%H:%M:%S'))
         
-        # 插入到列表开头，实现时间从近到远显示；完整历史继续保留
+        # 插入到列表开头，实现时间从近到远显示
         self.spot_data['trade_records'].insert(0, trade_data)
+        _trim_list_inplace(self.spot_data.get('trade_records'), MAX_SPOT_RECORDS, keep='head')
         
         self.update_global_data()
         return True
