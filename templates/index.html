@@ -1045,6 +1045,123 @@
         let profitCurveChart = null;
         let yearlyProfitCurveChart = null;
         const MAX_DISPLAY_RECORDS = 100;
+
+        function parseProfitCurveDate(value) {
+            const parts = String(value || '').split('-');
+            if (parts.length < 2) {
+                return null;
+            }
+
+            const year = Number(parts[0]);
+            const month = Number(parts[1]);
+            const hasDay = parts.length >= 3;
+            const day = hasDay ? Number(parts[2]) : 1;
+
+            if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+                return null;
+            }
+
+            return {
+                year,
+                month,
+                day: Number.isInteger(day) && day >= 1 && day <= 31 ? day : 1,
+                hasDay
+            };
+        }
+
+        function formatProfitCurveDate(parts) {
+            if (!parts) {
+                return '';
+            }
+
+            const year = String(parts.year);
+            const month = String(parts.month).padStart(2, '0');
+            if (!parts.hasDay) {
+                return `${year}-${month}`;
+            }
+
+            const day = String(parts.day).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getNormalizedProfitCurvePoints(totalProfitData) {
+            const dataPoints = totalProfitData?.profit_curve_data?.data_points;
+            if (!Array.isArray(dataPoints)) {
+                return [];
+            }
+
+            return dataPoints
+                .map((point, index) => {
+                    const dateParts = parseProfitCurveDate(point?.date);
+                    if (!dateParts) {
+                        return null;
+                    }
+
+                    const principal = Number(point?.principal);
+                    const totalFunds = Number(point?.total_funds);
+
+                    return {
+                        index,
+                        year: dateParts.year,
+                        month: dateParts.month,
+                        day: dateParts.day,
+                        label: formatProfitCurveDate(dateParts),
+                        principal: Number.isFinite(principal) ? principal : 0,
+                        totalFunds: Number.isFinite(totalFunds) ? totalFunds : 0
+                    };
+                })
+                .filter(Boolean)
+                .sort((left, right) => {
+                    if (left.year !== right.year) {
+                        return left.year - right.year;
+                    }
+                    if (left.month !== right.month) {
+                        return left.month - right.month;
+                    }
+                    if (left.day !== right.day) {
+                        return left.day - right.day;
+                    }
+                    return left.index - right.index;
+                });
+        }
+
+        function buildYearlyProfitCurveSeries(totalProfitData) {
+            const normalizedPoints = getNormalizedProfitCurvePoints(totalProfitData);
+            if (normalizedPoints.length === 0) {
+                return null;
+            }
+
+            const currentYear = new Date().getFullYear();
+            const yearlyPoints = normalizedPoints.filter(point => point.year === currentYear);
+            if (yearlyPoints.length === 0) {
+                return null;
+            }
+
+            let baselinePoint = null;
+            normalizedPoints.forEach(point => {
+                if (point.year < currentYear) {
+                    baselinePoint = point;
+                }
+            });
+
+            const yearlyStartPoint = baselinePoint || yearlyPoints[0];
+            const yearlyBaseFunds = yearlyStartPoint.totalFunds;
+            const yearlyStartPrincipal = yearlyStartPoint.principal;
+            const yearlyStartProfit = yearlyStartPoint.totalFunds - yearlyStartPoint.principal;
+
+            return {
+                labels: yearlyPoints.map(point => point.label),
+                principalData: yearlyPoints.map(point => {
+                    const addedPrincipal = Math.max(point.principal - yearlyStartPrincipal, 0);
+                    return yearlyBaseFunds + addedPrincipal;
+                }),
+                totalFundsData: yearlyPoints.map(point => point.totalFunds),
+                returnRateData: yearlyPoints.map(point => {
+                    const currentProfit = (point.totalFunds - point.principal) - yearlyStartProfit;
+                    return yearlyBaseFunds > 0 ? (currentProfit / yearlyBaseFunds) * 100 : 0;
+                })
+            };
+        }
         
         // 处理所有数据更新
         socket.on('all_data', function(data) {
@@ -1751,24 +1868,22 @@
                 console.error('没有盈利曲线数据');
                 return;
             }
-            
-            const profitCurveData = totalProfitData.profit_curve_data;
-            const dataPoints = profitCurveData.data_points || [];
-            
-            if (dataPoints.length === 0) {
+
+            const normalizedPoints = getNormalizedProfitCurvePoints(totalProfitData);
+            if (normalizedPoints.length === 0) {
                 console.error('盈利曲线数据为空');
                 return;
             }
             
             // 提取数据
-            const labels = dataPoints.map(point => point.date);
-            const principalData = dataPoints.map(point => point.principal);
-            const totalFundsData = dataPoints.map(point => point.total_funds);
+            const labels = normalizedPoints.map(point => point.label);
+            const principalData = normalizedPoints.map(point => point.principal);
+            const totalFundsData = normalizedPoints.map(point => point.totalFunds);
             
             // 计算收益率数据
-            const returnRateData = dataPoints.map(point => {
+            const returnRateData = normalizedPoints.map(point => {
                 const principal = point.principal;
-                const totalFunds = point.total_funds;
+                const totalFunds = point.totalFunds;
                 return principal > 0 ? ((totalFunds - principal) / principal * 100) : 0;
             });
             
@@ -1909,42 +2024,14 @@
                 console.error('没有盈利曲线数据');
                 return;
             }
-            
-            const profitCurveData = totalProfitData.profit_curve_data;
-            const dataPoints = profitCurveData.data_points || [];
-            
-            if (dataPoints.length === 0) {
-                console.error('盈利曲线数据为空');
+
+            const yearlySeries = buildYearlyProfitCurveSeries(totalProfitData);
+            if (!yearlySeries) {
+                console.error('本年没有可用的盈利曲线数据');
                 return;
             }
-            
-            // 获取当前年份
-            const currentYear = new Date().getFullYear().toString();
-            console.log('当前年份:', currentYear);
-            
-            // 提取本年数据
-            const yearlyDataPoints = dataPoints.filter(point => point.date.startsWith(currentYear));
-            
-            if (yearlyDataPoints.length === 0) {
-                console.error('本年没有盈利曲线数据');
-                return;
-            }
-            
-            // 提取数据
-            const labels = yearlyDataPoints.map(point => point.date);
-            const principalData = yearlyDataPoints.map(point => point.principal);
-            const totalFundsData = yearlyDataPoints.map(point => point.total_funds);
-            
-            // 计算收益率数据
-            // 找到上一年12月份的总资金作为本年的本金
-            const lastYear = (parseInt(currentYear) - 1).toString();
-            const lastYearDecemberData = dataPoints.find(point => point.date.startsWith(lastYear + '-12'));
-            const yearlyPrincipal = lastYearDecemberData ? lastYearDecemberData.total_funds : yearlyDataPoints[0].principal;
-            
-            const returnRateData = yearlyDataPoints.map(point => {
-                const totalFunds = point.total_funds;
-                return yearlyPrincipal > 0 ? ((totalFunds - yearlyPrincipal) / yearlyPrincipal * 100) : 0;
-            });
+
+            const { labels, principalData, totalFundsData, returnRateData } = yearlySeries;
             
             const ctx = document.getElementById('yearlyProfitCurveChart');
             if (!ctx) {
