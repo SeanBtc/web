@@ -1362,74 +1362,24 @@
                 console.error('总盈亏数据不存在');
                 return;
             }
-            
-            let totalMargin = 0;
-            let totalNetProfit = 0;
-            let totalReturnRate = 0;
-            let yearlyReturnRate = 0;
-            let yearlyReturnProfit = 0;
-            
-            if (data.total_profit.profit_curve_data && data.total_profit.profit_curve_data.data_points) {
-                // 直接从data_points计算
-                console.log('从data_points计算数据');
-                const dataPoints = data.total_profit.profit_curve_data.data_points;
-                
-                if (dataPoints.length > 0) {
-                    // 计算总收益率
-                    const lastData = dataPoints[dataPoints.length - 1];
-                    const totalPrincipal = lastData.principal; // 使用最后一个数据点的本金作为总成本
-                    totalMargin = lastData.total_funds;
-                    totalNetProfit = totalMargin - totalPrincipal;
-                    totalReturnRate = totalPrincipal > 0 ? (totalNetProfit / totalPrincipal * 100) : 0;
-                    
-                    // 计算本年收益率（以上一年12月份的总资金为本金）
-                    const currentYear = new Date().getFullYear().toString();
-                    const lastYear = (parseInt(currentYear) - 1).toString();
-                    
-                    // 找到上一年12月份的数据
-                    let lastYearDecemberData = null;
-                    for (const point of dataPoints) {
-                        if (point.date.startsWith(lastYear + '-12')) {
-                            lastYearDecemberData = point;
-                            break;
-                        }
-                    }
-                    
-                    // 找到本年的数据
-                    const yearlyDataPoints = dataPoints.filter(point => point.date.startsWith(currentYear));
-                    
-                    if (yearlyDataPoints.length > 0) {
-                        let yearlyPrincipal;
-                        if (lastYearDecemberData) {
-                            // 以上一年12月份的总资金为本金
-                            yearlyPrincipal = lastYearDecemberData.total_funds;
-                        } else {
-                            // 如果没有上一年12月份的数据，使用本年第一个数据点的本金
-                            yearlyPrincipal = yearlyDataPoints[0].principal;
-                        }
-                        
-                        const lastYearlyData = yearlyDataPoints[yearlyDataPoints.length - 1];
-                        const yearlyFunds = lastYearlyData.total_funds;
-                        yearlyReturnProfit = yearlyFunds - yearlyPrincipal;
-                        yearlyReturnRate = yearlyPrincipal > 0 ? (yearlyReturnProfit / yearlyPrincipal * 100) : 0;
-                    }
+
+            const summary = data.total_profit.profit_summary || {};
+            const toNumber = (value) => {
+                if (typeof value === 'string') {
+                    value = value.replace('%', '').replace(/,/g, '').trim();
                 }
-            }
-            
-            // 处理总收益率，确保显示为百分比格式
-            if (typeof totalReturnRate === 'number') {
-                totalReturnRate = totalReturnRate.toFixed(1) + '%';
-            }
-            
-            // 处理本年收益率，确保显示为百分比格式
-            if (typeof yearlyReturnRate === 'number') {
-                yearlyReturnRate = yearlyReturnRate.toFixed(1) + '%';
-            }
-            
-            // 隐藏当前总资金，不再更新
+                const numericValue = Number(value);
+                return Number.isFinite(numericValue) ? numericValue : 0;
+            };
+
+            const totalNetProfit = toNumber(summary.total_net_profit);
+            const totalReturnRate = toNumber(summary.total_return_rate);
+            const yearlyReturnRate = toNumber(summary.yearly_return_rate);
+            const yearlyReturnProfit = toNumber(summary.yearly_return_profit);
+
             document.getElementById('total-net-profit').textContent = '$' + Math.round(totalNetProfit);
-            document.getElementById('total-return-rate').textContent = totalReturnRate;
-            document.getElementById('yearly-return-rate').textContent = yearlyReturnRate;
+            document.getElementById('total-return-rate').textContent = totalReturnRate.toFixed(1) + '%';
+            document.getElementById('yearly-return-rate').textContent = yearlyReturnRate.toFixed(1) + '%';
             document.getElementById('yearly-return-profit').textContent = '$' + Math.round(yearlyReturnProfit);
         }
         

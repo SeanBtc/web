@@ -74,6 +74,106 @@ def _to_float(value, default=0.0):
     except (TypeError, ValueError):
         return default
 
+
+def _parse_profit_curve_date(value):
+    parts = str(value or '').split('-')
+    if len(parts) < 2:
+        return None
+
+    try:
+        year = int(parts[0])
+        month = int(parts[1])
+        day = int(parts[2]) if len(parts) > 2 else 1
+    except (TypeError, ValueError):
+        return None
+
+    if month < 1 or month > 12:
+        return None
+    if day < 1 or day > 31:
+        day = 1
+    return year, month, day
+
+
+def _build_total_profit_summary(total_profit_data):
+    summary = {
+        'total_net_profit': 0.0,
+        'total_margin': 0.0,
+        'total_return_rate': 0.0,
+        'yearly_return_rate': 0.0,
+        'yearly_return_profit': 0.0,
+        'total_principal': 0.0
+    }
+
+    if not isinstance(total_profit_data, dict):
+        return summary
+
+    curve_data = total_profit_data.get('profit_curve_data')
+    if not isinstance(curve_data, dict):
+        return summary
+
+    raw_points = curve_data.get('data_points')
+    if not isinstance(raw_points, list):
+        return summary
+
+    normalized_points = []
+    for index, point in enumerate(raw_points):
+        if not isinstance(point, dict):
+            continue
+
+        date_parts = _parse_profit_curve_date(point.get('date'))
+        normalized_points.append({
+            'year': date_parts[0] if date_parts else None,
+            'sort_key': date_parts if date_parts else (9999, 12, 31),
+            'index': index,
+            'principal': _to_float(point.get('principal'), 0.0),
+            'total_funds': _to_float(point.get('total_funds'), 0.0)
+        })
+
+    if not normalized_points:
+        return summary
+
+    normalized_points.sort(key=lambda point: (point['sort_key'], point['index']))
+
+    last_point = normalized_points[-1]
+    total_principal = last_point['principal']
+    total_margin = last_point['total_funds']
+    total_net_profit = total_margin - total_principal
+    total_return_rate = (total_net_profit / total_principal * 100) if total_principal > 0 else 0.0
+
+    current_year = datetime.now().year
+    current_year_points = []
+    baseline_point = None
+
+    for point in normalized_points:
+        point_year = point['year']
+        if point_year == current_year:
+            current_year_points.append(point)
+        elif point_year is not None and point_year < current_year:
+            baseline_point = point
+
+    yearly_return_profit = 0.0
+    yearly_return_rate = 0.0
+    if current_year_points:
+        yearly_start_point = baseline_point or current_year_points[0]
+        yearly_end_point = current_year_points[-1]
+
+        yearly_start_profit = yearly_start_point['total_funds'] - yearly_start_point['principal']
+        yearly_end_profit = yearly_end_point['total_funds'] - yearly_end_point['principal']
+        yearly_return_profit = yearly_end_profit - yearly_start_profit
+
+        yearly_base_funds = yearly_start_point['total_funds']
+        yearly_return_rate = (yearly_return_profit / yearly_base_funds * 100) if yearly_base_funds > 0 else 0.0
+
+    summary.update({
+        'total_net_profit': round(total_net_profit, 4),
+        'total_margin': round(total_margin, 4),
+        'total_return_rate': round(total_return_rate, 6),
+        'yearly_return_rate': round(yearly_return_rate, 6),
+        'yearly_return_profit': round(yearly_return_profit, 4),
+        'total_principal': round(total_principal, 4)
+    })
+    return summary
+
 # 从本地文件读取摸顶抄底策略数据
 def load_top_bottom_data():
     file_path = os.path.join(data_dir, 'top_bottom_trades.json')
@@ -105,58 +205,18 @@ def load_total_profit_data():
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                
-                # 计算盈利摘要数据
-                if 'profit_curve_data' in data and 'data_points' in data['profit_curve_data']:
-                    data_points = data['profit_curve_data']['data_points']
-                    if data_points:
-                        # 计算总收益率
-                        first_data = data_points[0]
-                        last_data = data_points[-1]
-                        total_principal = first_data['principal']
-                        total_funds = last_data['total_funds']
-                        total_net_profit = total_funds - total_principal
-                        total_return_rate = (total_net_profit / total_principal * 100) if total_principal > 0 else 0
-                        
-                        # 计算本年收益率（以上一年12月份的总资金为本金）
-                        current_year = datetime.now().year
-                        last_year = current_year - 1
-                        
-                        # 找到上一年12月份的数据
-                        last_year_december_data = None
-                        for point in data_points:
-                            if point['date'].startswith(f'{last_year}-12'):
-                                last_year_december_data = point
-                                break
-                        
-                        # 找到本年的数据
-                        yearly_data_points = [point for point in data_points if point['date'].startswith(f'{current_year}')]
-                        
-                        yearly_return_rate = 0
-                        yearly_return_profit = 0
-                        if yearly_data_points:
-                            if last_year_december_data:
-                                # 以上一年12月份的总资金为本金
-                                yearly_principal = last_year_december_data['total_funds']
-                            else:
-                                # 如果没有上一年12月份的数据，使用本年第一个数据点的本金
-                                yearly_principal = yearly_data_points[0]['principal']
-                            
-                            last_yearly_data = yearly_data_points[-1]
-                            yearly_funds = last_yearly_data['total_funds']
-                            yearly_return_profit = yearly_funds - yearly_principal
-                            yearly_return_rate = (yearly_return_profit / yearly_principal * 100) if yearly_principal > 0 else 0
-                
+                data['profit_summary'] = _build_total_profit_summary(data)
                 return data
         except Exception as e:
             print(f"读取总仓盈亏数据失败: {e}")
     return {
         'profit_summary': {
-            'total_net_profit': 0,
+            'total_net_profit': 0.0,
             'total_margin': 0.0,
-            'total_return_rate': "0%",
-            'yearly_return_rate': "0%",
-            'yearly_return_profit': 0
+            'total_return_rate': 0.0,
+            'yearly_return_rate': 0.0,
+            'yearly_return_profit': 0.0,
+            'total_principal': 0.0
         },
         'trade_records': [],
         'symbol_profit_tracker': {}
@@ -463,6 +523,8 @@ class DataStorage:
                 summary['retained_record_count'] = len(records)
 
         _trim_profit_curve_points(self.total_profit_data)
+        if isinstance(self.total_profit_data, dict):
+            self.total_profit_data['profit_summary'] = _build_total_profit_summary(self.total_profit_data)
     
     def update_global_data(self):
         global global_data
