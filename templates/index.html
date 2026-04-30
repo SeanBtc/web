@@ -739,6 +739,9 @@
                                     价格
                                 </th>
                                 <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    本笔盈亏
+                                </th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     交易类型
                                 </th>
                                 <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -748,7 +751,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="tradingview-tbody">
                             <tr>
-                                <td colspan="6" class="px-3 py-4 text-center text-gray-500">
+                                <td colspan="7" class="px-3 py-4 text-center text-gray-500">
                                     <i class="fa fa-info-circle text-lg mb-1"></i>
                                     <p>暂无交易记录</p>
                                 </td>
@@ -1214,7 +1217,7 @@
             if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                             <i class="fa fa-info-circle text-2xl mb-2"></i>
                             <p>暂无交易记录</p>
                         </td>
@@ -1242,6 +1245,7 @@
                 const side = trade.side || '未知';
                 const quantity = trade.quantity || 0;
                 const price = trade.price || 0;
+                const profitValue = trade.realized_pnl ?? trade.gross_pnl ?? trade.net_profit;
                 const tradeType = trade.trade_type || '未知';
                 const timestamp = trade.timestamp || '';
                 const sideClass = (side === 'BUY') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
@@ -1252,6 +1256,16 @@
                     '平仓': 'bg-yellow-100 text-yellow-800',
                     '未知': 'bg-gray-100 text-gray-800'
                 }[tradeType] || 'bg-gray-100 text-gray-800';
+                const hasProfit = profitValue !== undefined && profitValue !== null && profitValue !== '';
+                const profit = hasProfit ? Number(profitValue) : null;
+                const profitClass = profit === null
+                    ? 'text-gray-500'
+                    : profit > 0
+                        ? 'text-green-600'
+                        : profit < 0
+                            ? 'text-red-600'
+                            : 'text-gray-500';
+                const profitPrefix = profit !== null && profit > 0 ? '+' : '';
                 tr.innerHTML = `
                     <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${symbol}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm">
@@ -1261,6 +1275,7 @@
                     </td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${quantity}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${price}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium ${profitClass}">${profit === null ? '-' : `${profitPrefix}$${profit.toFixed(4)}`}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm">
                         <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${tradeTypeClass}">
                             ${tradeType}

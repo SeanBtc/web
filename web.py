@@ -174,6 +174,60 @@ def _build_total_profit_summary(total_profit_data):
     })
     return summary
 
+
+TRADINGVIEW_CLOSE_TYPES = {'平仓', '止盈', '止损'}
+
+
+def _sum_tradingview_round_profit(round_records):
+    if not isinstance(round_records, list):
+        return 0.0
+
+    total_profit = 0.0
+    for record in round_records:
+        if not isinstance(record, dict):
+            continue
+        total_profit += _to_float(record.get('pnl', record.get('profit', 0.0)), 0.0)
+    return total_profit
+
+
+def _extract_tradingview_profit_delta(trade_data):
+    if not isinstance(trade_data, dict):
+        return None
+
+    for field_name in ('realized_pnl', 'net_profit'):
+        field_value = trade_data.get(field_name)
+        if field_value is not None:
+            return _to_float(field_value, 0.0)
+
+    gross_pnl = trade_data.get('gross_pnl')
+    if gross_pnl is not None:
+        gross_pnl_value = _to_float(gross_pnl, 0.0)
+        open_fee = _to_float(trade_data.get('open_fee', 0.0), 0.0)
+        close_fee = _to_float(trade_data.get('close_fee', 0.0), 0.0)
+        return round(gross_pnl_value - open_fee - close_fee, 4)
+
+    trade_type = str(trade_data.get('trade_type') or '').strip()
+    if trade_type not in TRADINGVIEW_CLOSE_TYPES and not any(keyword in trade_type for keyword in TRADINGVIEW_CLOSE_TYPES):
+        return None
+
+    entry_price = _to_float(trade_data.get('entry_price'), None)
+    exit_price = _to_float(trade_data.get('exit_price'), None)
+    quantity = _to_float(trade_data.get('quantity'), None)
+    if entry_price is None or exit_price is None or quantity is None or quantity <= 0:
+        return None
+
+    side = str(trade_data.get('side') or '').strip().upper()
+    if side == 'SELL':
+        gross_pnl_value = (exit_price - entry_price) * quantity
+    elif side == 'BUY':
+        gross_pnl_value = (entry_price - exit_price) * quantity
+    else:
+        return None
+
+    open_fee = _to_float(trade_data.get('open_fee', 0.0), 0.0)
+    close_fee = _to_float(trade_data.get('close_fee', 0.0), 0.0)
+    return round(gross_pnl_value - open_fee - close_fee, 4)
+
 # 从本地文件读取摸顶抄底策略数据
 def load_top_bottom_data():
     file_path = os.path.join(data_dir, 'top_bottom_trades.json')
@@ -369,6 +423,7 @@ def check_file_updates():
                         'total_profit_all': 0.0,
                         'initial_funds': 1000.0
                     })
+                    data_storage._refresh_tradingview_signal_ids()
                     data_storage.update_global_data()
                     # 广播更新
                     socketio.emit('all_data', data_storage.get_all_data())
@@ -494,7 +549,16 @@ class DataStorage:
         self.strategy_status = global_data['strategy_status']
         self.market_data = global_data['market_data']
         self.arbitrage_start_time = None  # 套利策略启动时间
+        self._tradingview_signal_ids = set()
         self._apply_memory_limits()
+        self._refresh_tradingview_signal_ids()
+
+    def _refresh_tradingview_signal_ids(self):
+        self._tradingview_signal_ids = {
+            str(record.get('signal_id')).strip()
+            for record in self.tradingview_data
+            if isinstance(record, dict) and str(record.get('signal_id') or '').strip()
+        }
 
     def _apply_memory_limits(self):
         _trim_list_inplace(self.tradingview_data, MAX_TRADINGVIEW_RECORDS, keep='head')
@@ -541,6 +605,11 @@ class DataStorage:
         global_data['arbitrage_start_time'] = self.arbitrage_start_time
     
     def add_tradingview_trade(self, trade_data):
+        signal_id = str(trade_data.get('signal_id') or '').strip()
+        if signal_id and signal_id in self._tradingview_signal_ids:
+            print(f"TradingView重复信号已忽略: {signal_id}")
+            return
+
         trade_data['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
         trade_data.setdefault('strategy_type', 'legacy_tradingview')
         trade_data.setdefault('strategy_label', '4H策略')
@@ -552,24 +621,47 @@ class DataStorage:
         trade_data.setdefault('account_profile', 'default.json')
         # 插入到列表开头，实现时间从近到远显示
         self.tradingview_data.insert(0, trade_data)
+        if signal_id:
+            self._tradingview_signal_ids.add(signal_id)
 
         # 支持通过接口附带更新过去几轮盈利记录
         if isinstance(trade_data.get('round_record'), dict):
             self.tradingview_rounds.insert(0, trade_data['round_record'])
         if isinstance(trade_data.get('round_records'), list):
             self.tradingview_rounds = trade_data['round_records']
-        
-        # 更新tradingview_summary数据
-        if 'win_trades' in trade_data:
-            self.tradingview_summary['win_trades'] = trade_data['win_trades']
-        if 'lose_trades' in trade_data:
-            self.tradingview_summary['lose_trades'] = trade_data['lose_trades']
-        if 'total_profit' in trade_data:
-            self.tradingview_summary['total_profit'] = trade_data['total_profit']
-        if 'total_profit_all' in trade_data:
-            self.tradingview_summary['total_profit_all'] = trade_data['total_profit_all']
-        if 'initial_funds' in trade_data:
-            self.tradingview_summary['initial_funds'] = trade_data['initial_funds']
+
+        profit_delta = _extract_tradingview_profit_delta(trade_data)
+        if profit_delta is not None:
+            current_total_profit = _to_float(self.tradingview_summary.get('total_profit', 0.0), 0.0)
+            self.tradingview_summary['total_profit'] = round(current_total_profit + profit_delta, 4)
+
+            current_win_trades = int(_to_float(self.tradingview_summary.get('win_trades', 0), 0.0))
+            current_lose_trades = int(_to_float(self.tradingview_summary.get('lose_trades', 0), 0.0))
+            if profit_delta > 0:
+                self.tradingview_summary['win_trades'] = current_win_trades + 1
+                self.tradingview_summary['lose_trades'] = current_lose_trades
+            elif profit_delta < 0:
+                self.tradingview_summary['win_trades'] = current_win_trades
+                self.tradingview_summary['lose_trades'] = current_lose_trades + 1
+            else:
+                self.tradingview_summary['win_trades'] = current_win_trades
+                self.tradingview_summary['lose_trades'] = current_lose_trades
+        else:
+            # 兼容旧版手工推送：如果上游已经给了累计总盈亏，仍然直接采用。
+            if 'win_trades' in trade_data:
+                self.tradingview_summary['win_trades'] = trade_data['win_trades']
+            if 'lose_trades' in trade_data:
+                self.tradingview_summary['lose_trades'] = trade_data['lose_trades']
+            if 'total_profit' in trade_data:
+                self.tradingview_summary['total_profit'] = trade_data['total_profit']
+            if 'initial_funds' in trade_data:
+                self.tradingview_summary['initial_funds'] = trade_data['initial_funds']
+
+        self.tradingview_summary['total_profit_all'] = round(
+            _to_float(self.tradingview_summary.get('total_profit', 0.0), 0.0)
+            + _sum_tradingview_round_profit(self.tradingview_rounds),
+            4,
+        )
 
         self._apply_memory_limits()
         
