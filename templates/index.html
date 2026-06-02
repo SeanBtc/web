@@ -697,18 +697,6 @@
                 font-size: 0.66rem;
             }
 
-            #triangle-section .triangle-panel-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 0.55rem;
-                min-height: 0;
-            }
-
-            #triangle-section .triangle-order-card,
-            #triangle-section .triangle-round-card {
-                flex: 0 0 auto;
-            }
-
             .record-card {
                 display: grid;
                 grid-template-rows: auto minmax(0, 1fr);
@@ -956,7 +944,7 @@
                     </div>
                     <h3 class="text-lg font-semibold text-dark">带单模块</h3>
                 </div>
-                <p class="text-gray-600 mb-3 section-intro">TradeSync 同步的 lead 账号和私域账号订单。</p>
+                <p class="text-gray-600 mb-3 section-intro">同步 lead 账号订单。</p>
                 <div class="flex items-center mb-4">
                     <span class="text-xs font-medium text-gray-500 mr-2">状态:</span>
                     <span class="px-2 py-1 rounded-full text-xs font-semibold" id="lead-status">运行</span>
@@ -1083,7 +1071,7 @@
                     </div>
                     <h3 class="text-lg font-semibold text-dark">三角策略</h3>
                 </div>
-                <p class="text-gray-600 mb-3 section-intro">TradeSync 同步的 triangle 账号和三角策略订单。</p>
+                <p class="text-gray-600 mb-3 section-intro">同步 triangle 账号订单。</p>
                 <div class="flex items-center mb-4">
                     <span class="text-xs font-medium text-gray-500 mr-2">状态:</span>
                     <span class="px-2 py-1 rounded-full text-xs font-semibold" id="triangle-status">运行</span>
@@ -1351,6 +1339,17 @@
             return numericValue.toLocaleString('en-US', {
                 minimumFractionDigits: fractionDigits,
                 maximumFractionDigits: fractionDigits
+            });
+        }
+
+        function formatQuantity(value) {
+            const numericValue = Number(value);
+            if (!Number.isFinite(numericValue)) {
+                return '-';
+            }
+            return numericValue.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 8
             });
         }
 
@@ -1825,7 +1824,7 @@
                     <td class="px-3 py-2 whitespace-nowrap text-sm">
                         <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${tradeTypeClass}">${tradeType}</span>
                     </td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatDecimal(trade.quantity || 0)}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(trade.quantity || 0)}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${priceText}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm font-medium ${pnlClass}">${pnl === null ? '-' : formatSignedMoney(pnl)}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.reason || '-'}</td>
@@ -2098,7 +2097,7 @@
                     <td class="px-3 py-2 whitespace-nowrap text-sm">
                         <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${tradeTypeClass}">${tradeType}</span>
                     </td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatDecimal(trade.quantity || 0)}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(trade.quantity || 0)}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${priceText}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm font-medium ${pnlClass}">${pnl === null ? '-' : formatSignedMoney(pnl)}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.reason || '-'}</td>
@@ -2316,7 +2315,7 @@
             // 更新仓位数量
             const quantityElement = document.getElementById('top-bottom-quantity');
             if (quantityElement) {
-                quantityElement.textContent = formatDecimal(topBottomData.position_quantity || 0) + ' BTC';
+                quantityElement.textContent = formatQuantity(topBottomData.position_quantity || 0) + ' BTC';
             }
             
             // 更新仓位均价
@@ -2371,7 +2370,7 @@
                             ${trade.mode || '-'}
                         </span>
                     </td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatDecimal(trade.quantity || 0)} BTC</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(trade.quantity || 0)} BTC</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatMoney(parseFloat(trade.avg_price) || 0)}</td>
                     <td class="px-3 py-2 whitespace-nowrap text-sm">
                         <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${trade.is_closed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
