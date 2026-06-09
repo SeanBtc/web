@@ -2286,60 +2286,69 @@
         
         // 更新摸顶抄底策略数据
         function updateTopBottomData(data) {
-            // 检查数据是否存在
             if (!data) return;
-            
-            // top_bottom 是当前使用的数据键
             const topBottomData = data.top_bottom || data;
-            
             if (!topBottomData) return;
-            
             console.log('摸顶抄底数据:', topBottomData);
 
-            // 更新策略总盈亏（累计交易记录盈亏）
+            const isDca = topBottomData.source === 'spot_dca';
+
             const topBottomTotalProfit = (topBottomData.trade_records || []).reduce((sum, trade) => {
                 return sum + (parseFloat(trade.profit) || 0);
             }, 0);
             const topBottomTotalProfitElement = document.getElementById('top-bottom-total-profit');
             if (topBottomTotalProfitElement) {
-                topBottomTotalProfitElement.textContent = formatMoney(topBottomTotalProfit);
-                topBottomTotalProfitElement.className = 'text-lg font-bold ' + (topBottomTotalProfit >= 0 ? 'text-green-600' : 'text-red-600');
+                topBottomTotalProfitElement.textContent = isDca ?
+                    (topBottomData.dca_progress || 0).toFixed(1) + '%' :
+                    formatMoney(topBottomTotalProfit);
+                topBottomTotalProfitElement.className = 'text-lg font-bold ' + (isDca ? 'text-blue-600' : (topBottomTotalProfit >= 0 ? 'text-green-600' : 'text-red-600'));
             }
-            
-            // 更新仓位状态
+
             const statusElement = document.getElementById('top-bottom-status-display');
             if (statusElement) {
-                statusElement.textContent = topBottomData.position_status || '未知';
+                const posStatus = isDca ?
+                    (topBottomData.strategy_label || topBottomData.position_status || '未知') :
+                    (topBottomData.position_status || '未知');
+                const modeText = isDca ? (topBottomData.execution_mode_text || '') : '';
+                statusElement.textContent = posStatus + (modeText ? ' | ' + modeText : '');
             }
-            
-            // 更新仓位数量
+
             const quantityElement = document.getElementById('top-bottom-quantity');
             if (quantityElement) {
-                quantityElement.textContent = formatQuantity(topBottomData.position_quantity || 0) + ' BTC';
+                if (isDca) {
+                    const qty = parseFloat(topBottomData.position_quantity) || 0;
+                    if (topBottomData.use_quantity_mode) {
+                        quantityElement.textContent = formatQuantity(qty) + ' ' + (topBottomData.position_symbol || '');
+                    } else {
+                        quantityElement.textContent = formatMoney(qty) + ' USDT';
+                    }
+                } else {
+                    quantityElement.textContent = formatQuantity(topBottomData.position_quantity || 0) + ' BTC';
+                }
             }
-            
-            // 更新仓位均价
+
             const avgPriceElement = document.getElementById('top-bottom-avg-price');
             if (avgPriceElement) {
                 const avgPrice = parseFloat(topBottomData.position_avg_price) || 0;
                 avgPriceElement.textContent = formatMoney(avgPrice);
+                if (isDca && topBottomData.dca_progress !== undefined) {
+                    avgPriceElement.textContent += ' | 进度 ' + topBottomData.dca_progress.toFixed(1) + '%';
+                }
             }
-            
-            // 计算并更新浮盈
-            calculateFloatProfit(topBottomData);
+
+            calculateFloatProfit(topBottomData, isDca);
         }
         
-        // 更新摸顶抄底策略交易记录表格
         function updateTopBottomTable(data) {
             const tbody = document.getElementById('top-bottom-tbody');
-            // top_bottom 是当前使用的数据键
             const topBottomData = data.top_bottom || data;
             const tradeRecords = topBottomData.trade_records || [];
-            
+            const isDca = topBottomData.source === 'spot_dca';
+
             if (tradeRecords.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                             <i class="fa fa-info-circle text-2xl mb-2"></i>
                             <p>暂无交易记录</p>
                         </td>
@@ -2347,76 +2356,95 @@
                 `;
                 return;
             }
-            
-            // 按时间倒序排列，最新记录在前
+
             const sortedTradeRecords = [...tradeRecords].sort((a, b) => {
-                // 确保时间格式可解析
                 const timeA = a.timestamp ? new Date(a.timestamp.replace(/-/g, '/')) : 0;
                 const timeB = b.timestamp ? new Date(b.timestamp.replace(/-/g, '/')) : 0;
                 return timeB - timeA;
             });
-            
-            // 仅显示最近记录，完整历史仍保留在存储中
+
             const displayTradeRecords = sortedTradeRecords.slice(0, MAX_DISPLAY_RECORDS);
-            
+
             tbody.innerHTML = '';
             displayTradeRecords.forEach(trade => {
+                const isDcaTrade = trade.source === 'spot_dca';
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-50';
-                tr.innerHTML = `
-                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.timestamp || '-'}</td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm">
-                        <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${(trade.mode === '摸顶做空' || trade.mode === '做空') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                            ${trade.mode || '-'}
-                        </span>
-                    </td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(trade.quantity || 0)} BTC</td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatMoney(parseFloat(trade.avg_price) || 0)}</td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm">
-                        <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${trade.is_closed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                            ${trade.is_closed ? '已平仓' : '未平仓'}
-                        </span>
-                    </td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.close_timestamp || '-'}</td>
-                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-${(parseFloat(trade.profit) >= 0) ? 'green-600' : 'red-600'}">${formatMoney(parseFloat(trade.profit) || 0)}</td>
-                `;
+                if (isDcaTrade) {
+                    const qty = parseFloat(trade.quantity) || 0;
+                    const isBuy = (trade.direction || '').includes('long') || (trade.mode || '').includes('买入') || (trade.mode || '').includes('开多');
+                    const quoteAmount = trade.quote_amount ? ('$' + formatMoney(parseFloat(trade.quote_amount) || 0)) : '';
+                    const remainingSlots = trade.remaining_dca_count !== undefined ? ('剩余' + trade.remaining_dca_count + '次') : '';
+                    tr.innerHTML = `
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.timestamp || '-'}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm">
+                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${isBuy ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${trade.strategy_label || trade.mode || '-'}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(qty)} ${trade.symbol || ''}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatMoney(parseFloat(trade.avg_price) || 0)}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm">
+                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${trade.is_closed ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                                ${trade.is_closed ? '已执行' : '待执行'}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.close_timestamp || trade.next_due_time || '-'}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${quoteAmount} <span class="text-xs text-gray-400">${remainingSlots}</span></td>
+                    `;
+                } else {
+                    tr.innerHTML = `
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.timestamp || '-'}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm">
+                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${(trade.mode === '摸顶做空' || trade.mode === '做空') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${trade.mode || '-'}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(trade.quantity || 0)} BTC</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatMoney(parseFloat(trade.avg_price) || 0)}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm">
+                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${trade.is_closed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                ${trade.is_closed ? '已平仓' : '未平仓'}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.close_timestamp || '-'}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium ${(parseFloat(trade.profit) >= 0) ? 'text-green-600' : 'text-red-600'}">${formatMoney(parseFloat(trade.profit) || 0)}</td>
+                    `;
+                }
                 tbody.appendChild(tr);
             });
-            
         }
         
-        // 计算浮盈
-        function calculateFloatProfit(topBottomData) {
-            // 获取当前 BTC 价格
+        function calculateFloatProfit(topBottomData, isDca) {
             const priceElement = document.getElementById('btc-price');
             if (!priceElement) return;
-            
             const priceText = priceElement.textContent;
             const currentPrice = parseFloat(priceText.replace('$', '').replace(',', ''));
-            
             if (isNaN(currentPrice)) return;
-            
-            const positionStatus = topBottomData.position_status;
-            const positionQuantity = topBottomData.position_quantity;
-            const positionAvgPrice = topBottomData.position_avg_price;
-            
+
+            const positionStatus = topBottomData.position_status || '';
+            const positionQuantity = isDca ?
+                (parseFloat(topBottomData.position_quantity) || 0) :
+                (topBottomData.position_quantity || 0);
+            const positionAvgPrice = parseFloat(topBottomData.position_avg_price) || 0;
+
             let floatProfit = 0;
-            
-            // 根据仓位状态计算浮盈
-            if (positionStatus === '摸顶做空' || positionStatus === '做空') {
-                // 做空: (开仓价格 - 当前价格) * 数量
+
+            if (isDca) {
+                if (positionStatus.includes('做多')) {
+                    floatProfit = (currentPrice - positionAvgPrice) * positionQuantity;
+                } else if (positionStatus.includes('做空')) {
+                    floatProfit = (positionAvgPrice - currentPrice) * positionQuantity;
+                }
+            } else if (positionStatus === '摸顶做空' || positionStatus === '做空') {
                 floatProfit = (positionAvgPrice - currentPrice) * positionQuantity;
             } else if (positionStatus === '抄底做多' || positionStatus === '做多') {
-                // 做多: (当前价格 - 开仓价格) * 数量
                 floatProfit = (currentPrice - positionAvgPrice) * positionQuantity;
             }
-            
-            // 更新浮盈显示
+
             const floatProfitElement = document.getElementById('top-bottom-float-profit');
             if (floatProfitElement) {
                 floatProfitElement.textContent = formatMoney(floatProfit);
-                
-                // 根据浮盈正负设置颜色
                 floatProfitElement.className = 'text-md font-bold';
                 if (floatProfit >= 0) {
                     floatProfitElement.classList.add('text-green-600');
