@@ -740,6 +740,26 @@ def save_arbitrage_data(data):
     except Exception as e:
         print(f"保存套利策略数据失败: {e}")
 
+# 将摸顶抄底策略数据保存到本地文件（含现货和DCA定投订单记录）
+def save_top_bottom_data(data):
+    file_path = os.path.join(data_dir, 'top_bottom_trades.json')
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print("摸顶抄底数据已保存")
+    except Exception as e:
+        print(f"保存摸顶抄底数据失败: {e}")
+
+# 将现货策略数据保存到本地文件
+def save_spot_data(data):
+    file_path = os.path.join(data_dir, 'spot_trades.json')
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print("现货策略数据已保存")
+    except Exception as e:
+        print(f"保存现货策略数据失败: {e}")
+
 # 定期检查文件更新的函数
 def check_file_updates():
     top_bottom_file_path = os.path.join(data_dir, 'top_bottom_trades.json')
@@ -842,8 +862,7 @@ def check_file_updates():
                     })
                     data_storage._triangle_open_positions = _rebuild_triangle_open_positions(data_storage.triangle_data)
                     data_storage.strategy_status['triangle'] = '运行'
-                    data_storage.strategy_status['triangle'] = '运行'
-                    data_storage._refresh_triangle_signal_ids()
+
                     data_storage.update_global_data()
                     # 广播更新
                     socketio.emit('all_data', data_storage.get_all_data())
@@ -940,18 +959,12 @@ def fetch_btc_price():
         time.sleep(30)
 
 global_data = {
-    'triangle': {
-        'trade_records': triangle_trade_records,
-        'round_records': triangle_round_records,
-        'summary': triangle_summary,
-    },
+    'triangle': triangle_trade_records,
+    'triangle_rounds': triangle_round_records,
     'triangle_summary': triangle_summary,
-    'triangle': triangle_trade_records,  # 三角策略交易数据
-    'triangle_rounds': triangle_round_records,  # 三角策略历史轮次记录
-    'triangle_summary': triangle_summary,  # 三角策略盈亏摘要
-    'arbitrage_data': arbitrage_data,  # 套利策略数据
-    'lead_data': lead_data,  # 带单策略数据
-    'total_profit_data': total_profit_data,  # 总盈亏数据
+    'arbitrage_data': arbitrage_data,
+    'lead_data': lead_data,
+    'total_profit_data': total_profit_data,
     'top_bottom_data': {
         'position_status': top_bottom_file_data.get('position_status', '摸顶做空'),  # 当前仓位状态：摸顶做空/抄底做多
         'position_quantity': top_bottom_file_data.get('position_quantity', 0.17),  # 当前仓位数量
@@ -966,10 +979,9 @@ global_data = {
         'trade_records': spot_file_data.get('trade_records', [])  # 从本地文件读取交易记录
     },
     'strategy_status': {
-        'lead': '运行',         # 带单策略状态：运行/暂停
-        'triangle': '运行',     # 三角策略状态：运行/暂停
-        'triangle': '运行',  # 兼容旧键，保留相同状态值
-        'arbitrage': '运行',     # 套利策略状态：运行/暂停
+        'lead': '运行',
+        'triangle': '运行',
+        'arbitrage': '运行',
         'top_bottom': top_bottom_file_data.get('position_status', '摸顶做空'),  # 摸顶抄底策略状态：摸顶做空/抄底做多/空仓
         'spot': '空仓'           # 现货策略状态：满仓/建仓/空仓
     },
@@ -984,8 +996,6 @@ class DataStorage:
     def __init__(self):
         self.triangle_data = global_data['triangle']
         self.triangle_rounds = global_data.get('triangle_rounds', [])
-        self.triangle_summary = global_data['triangle_summary']
-        self.triangle_data = global_data['triangle']
         self.triangle_summary = global_data['triangle_summary']
         self.arbitrage_data = global_data['arbitrage_data']
         self.lead_data = global_data['lead_data']
@@ -1176,7 +1186,6 @@ class DataStorage:
             updated_summary['archived_realized_pnl'] = 0.0
 
         self.triangle_summary = updated_summary
-        self.strategy_status['triangle'] = '运行'
         self.strategy_status['triangle'] = '运行'
         if signal_id:
             self._triangle_signal_ids.add(signal_id)
@@ -1434,6 +1443,7 @@ class DataStorage:
         if 'trade_records' in data:
             self.top_bottom_data['trade_records'] = data['trade_records']
         self.update_global_data()
+        save_top_bottom_data(self.top_bottom_data)
         return True
     
     def add_top_bottom_trade(self, trade_data):
@@ -1455,6 +1465,7 @@ class DataStorage:
         _trim_list_inplace(self.top_bottom_data.get('trade_records'), MAX_TOP_BOTTOM_RECORDS, keep='head')
         
         self.update_global_data()
+        save_top_bottom_data(self.top_bottom_data)
         return True
     
     def update_spot_data(self, data):
@@ -1467,6 +1478,7 @@ class DataStorage:
         if 'trade_records' in data:
             self.spot_data['trade_records'] = data['trade_records']
         self.update_global_data()
+        save_spot_data(self.spot_data)
         return True
     
     def add_spot_trade(self, trade_data):
@@ -1488,6 +1500,7 @@ class DataStorage:
         _trim_list_inplace(self.spot_data.get('trade_records'), MAX_SPOT_RECORDS, keep='head')
         
         self.update_global_data()
+        save_spot_data(self.spot_data)
         return True
     
     def get_all_data(self):
