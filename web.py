@@ -597,14 +597,25 @@ def load_lead_data():
     }
 
 
-def save_lead_data(data):
-    file_path = os.path.join(data_dir, 'lead_trades.json')
+def _save_json_if_changed(file_path, data, label):
     try:
+        new_content = json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True)
+        old_content = ''
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                old_content = f.read()
+        if new_content == old_content:
+            return
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print("带单策略数据已保存")
+            f.write(new_content)
+        print(f"{label}已保存")
     except Exception as e:
-        print(f"保存带单策略数据失败: {e}")
+        print(f"保存{label}失败: {e}")
+
+
+def save_lead_data(data):
+    _save_json_if_changed(os.path.join(data_dir, 'lead_trades.json'), data, '带单策略数据')
+
 
 # 从本地文件读取摸顶抄底策略数据
 def load_top_bottom_data():
@@ -700,13 +711,7 @@ def load_triangle_data():
 
 
 def save_triangle_data(data):
-    file_path = os.path.join(data_dir, 'triangle_trades.json')
-    try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print("三角策略数据已保存")
-    except Exception as e:
-        print(f"保存三角策略数据失败: {e}")
+    _save_json_if_changed(os.path.join(data_dir, 'triangle_trades.json'), data, '三角策略数据')
 
 # 从本地文件读取套利策略数据
 def load_arbitrage_data():
@@ -732,33 +737,15 @@ def load_arbitrage_data():
 
 # 将套利策略数据保存到本地文件
 def save_arbitrage_data(data):
-    file_path = os.path.join(data_dir, 'arbitrage_trades.json')
-    try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print("套利策略数据已保存")
-    except Exception as e:
-        print(f"保存套利策略数据失败: {e}")
+    _save_json_if_changed(os.path.join(data_dir, 'arbitrage_trades.json'), data, '套利策略数据')
 
 # 将摸顶抄底策略数据保存到本地文件（含现货和DCA定投订单记录）
 def save_top_bottom_data(data):
-    file_path = os.path.join(data_dir, 'top_bottom_trades.json')
-    try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print("摸顶抄底数据已保存")
-    except Exception as e:
-        print(f"保存摸顶抄底数据失败: {e}")
+    _save_json_if_changed(os.path.join(data_dir, 'top_bottom_trades.json'), data, '摸顶抄底数据')
 
 # 将现货策略数据保存到本地文件
 def save_spot_data(data):
-    file_path = os.path.join(data_dir, 'spot_trades.json')
-    try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print("现货策略数据已保存")
-    except Exception as e:
-        print(f"保存现货策略数据失败: {e}")
+    _save_json_if_changed(os.path.join(data_dir, 'spot_trades.json'), data, '现货策略数据')
 
 # 定期检查文件更新的函数
 def check_file_updates():
@@ -784,51 +771,47 @@ def check_file_updates():
                 current_modified = os.path.getmtime(top_bottom_file_path)
                 if current_modified > last_modified_top_bottom:
                     last_modified_top_bottom = current_modified
-                    # 重新加载数据
                     new_data = load_top_bottom_data()
-                    # 更新仓位状态
+                    old_snapshot = json.dumps(data_storage.top_bottom_data, ensure_ascii=False, sort_keys=True)
                     data_storage.top_bottom_data['position_status'] = new_data.get('position_status', '摸顶做空')
                     data_storage.top_bottom_data['position_quantity'] = new_data.get('position_quantity', 0.1)
                     data_storage.top_bottom_data['position_avg_price'] = new_data.get('position_avg_price', 11600.0)
                     data_storage.top_bottom_data['position_symbol'] = new_data.get('position_symbol', 'BTCUSDT')
                     data_storage.top_bottom_data['trade_records'] = new_data.get('trade_records', [])
-                    # 更新策略状态
                     data_storage.strategy_status['top_bottom'] = new_data.get('position_status', '摸顶做空')
                     data_storage.update_global_data()
-                    # 广播更新
-                    socketio.emit('all_data', data_storage.get_all_data())
-                    print("摸顶抄底数据已更新")
+                    new_snapshot = json.dumps(data_storage.top_bottom_data, ensure_ascii=False, sort_keys=True)
+                    if old_snapshot != new_snapshot:
+                        print("摸顶抄底数据已更新")
             
             # 检查现货策略文件
             if os.path.exists(spot_file_path):
                 current_modified = os.path.getmtime(spot_file_path)
                 if current_modified > last_modified_spot:
                     last_modified_spot = current_modified
-                    # 重新加载数据
                     new_data = load_spot_data()
-                    # 更新仓位状态
+                    old_snapshot = json.dumps(data_storage.spot_data, ensure_ascii=False, sort_keys=True)
                     data_storage.spot_data['position_quantity'] = new_data.get('position_quantity', 0.0)
                     data_storage.spot_data['position_avg_price'] = new_data.get('position_avg_price', 0.0)
                     data_storage.spot_data['position_symbol'] = new_data.get('position_symbol', 'BTCUSDT')
                     data_storage.spot_data['trade_records'] = new_data.get('trade_records', [])
                     data_storage.update_global_data()
-                    # 广播更新
-                    socketio.emit('all_data', data_storage.get_all_data())
-                    print("现货策略数据已更新")
+                    new_snapshot = json.dumps(data_storage.spot_data, ensure_ascii=False, sort_keys=True)
+                    if old_snapshot != new_snapshot:
+                        print("现货策略数据已更新")
             
             # 检查总盈亏数据文件
             if os.path.exists(total_profit_file_path):
                 current_modified = os.path.getmtime(total_profit_file_path)
                 if current_modified > last_modified_total_profit:
                     last_modified_total_profit = current_modified
-                    # 重新加载数据
                     new_data = load_total_profit_data()
-                    # 更新总盈亏数据
+                    old_snapshot = json.dumps(data_storage.total_profit_data, ensure_ascii=False, sort_keys=True)
                     data_storage.total_profit_data = new_data
                     data_storage.update_global_data()
-                    # 广播更新
-                    socketio.emit('all_data', data_storage.get_all_data())
-                    print("总盈利数据已更新")
+                    new_snapshot = json.dumps(data_storage.total_profit_data, ensure_ascii=False, sort_keys=True)
+                    if old_snapshot != new_snapshot:
+                        print("总盈利数据已更新")
             
 
             
@@ -846,7 +829,8 @@ def check_file_updates():
 
                     # 重新加载数据
                     new_data = load_triangle_data()
-                    # 更新三角策略数据
+                    old_records = json.dumps(data_storage.triangle_data, ensure_ascii=False, sort_keys=True)
+                    old_summary = json.dumps(data_storage.triangle_summary, ensure_ascii=False, sort_keys=True)
                     data_storage.triangle_data = new_data.get('trade_records', [])
                     data_storage.triangle_rounds = new_data.get('round_records', [])
                     data_storage.triangle_summary = new_data.get('summary', {
@@ -864,9 +848,10 @@ def check_file_updates():
                     data_storage.strategy_status['triangle'] = '运行'
 
                     data_storage.update_global_data()
-                    # 广播更新
-                    socketio.emit('all_data', data_storage.get_all_data())
-                    print("三角策略数据已更新")
+                    new_records = json.dumps(data_storage.triangle_data, ensure_ascii=False, sort_keys=True)
+                    new_summary = json.dumps(data_storage.triangle_summary, ensure_ascii=False, sort_keys=True)
+                    if old_records != new_records or old_summary != new_summary:
+                        print("三角策略数据已更新")
 
             # 检查带单策略数据文件
             if os.path.exists(lead_file_path):
@@ -874,25 +859,26 @@ def check_file_updates():
                 if current_modified > last_modified_lead:
                     last_modified_lead = current_modified
                     new_data = load_lead_data()
+                    old_snapshot = json.dumps(data_storage.lead_data, ensure_ascii=False, sort_keys=True)
                     data_storage.lead_data = new_data
                     data_storage.strategy_status['lead'] = '运行'
                     data_storage.update_global_data()
-                    socketio.emit('all_data', data_storage.get_all_data())
-                    print("带单策略数据已更新")
+                    new_snapshot = json.dumps(data_storage.lead_data, ensure_ascii=False, sort_keys=True)
+                    if old_snapshot != new_snapshot:
+                        print("带单策略数据已更新")
             
             # 检查套利策略数据文件
             if os.path.exists(arbitrage_file_path):
                 current_modified = os.path.getmtime(arbitrage_file_path)
                 if current_modified > last_modified_arbitrage:
                     last_modified_arbitrage = current_modified
-                    # 重新加载数据
                     new_data = load_arbitrage_data()
-                    # 更新套利策略数据
+                    old_snapshot = json.dumps(data_storage.arbitrage_data, ensure_ascii=False, sort_keys=True)
                     data_storage.arbitrage_data = new_data
                     data_storage.update_global_data()
-                    # 广播更新
-                    socketio.emit('all_data', data_storage.get_all_data())
-                    print("套利策略数据已更新")
+                    new_snapshot = json.dumps(data_storage.arbitrage_data, ensure_ascii=False, sort_keys=True)
+                    if old_snapshot != new_snapshot:
+                        print("套利策略数据已更新")
             
             # 每 5 秒检查一次
             time.sleep(5)
@@ -923,40 +909,135 @@ triangle_summary = triangle_data.get('summary', {
     'initial_funds': 1000.0
 })
 
-# 定期获取 BTC 价格
+# 定期获取 BTC 价格（DataFeed 优先 → Binance API → CoinGecko 回退）
 def fetch_btc_price():
-    # 延迟启动，确保服务已经完全启动
     time.sleep(10)
-    
+
+    feeder = None
+    last_df_status = ''
+    try:
+        _df_dir = os.path.abspath(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), '..', 'DataFeed'
+        ))
+        if _df_dir not in sys.path:
+            sys.path.insert(0, _df_dir)
+        from datafeed.price_feeder import get_price_feeder
+
+        feeder = get_price_feeder()
+        feeder.watch_coins(['BTC'])
+        feeder.start()
+        time.sleep(3)
+        st = feeder.get_status_log()
+        print(f'[Web] {st}')
+        last_df_status = st
+    except Exception as e:
+        print(f'[Web] DataFeed 不可用 ({e})，使用直接 API 模式')
+
+    last_source = 'none'
+    last_price = 0.0
+    last_emit_time = 0.0
+    last_emit_log_time = 0.0
+    EMIT_INTERVAL = 5.0
+    retry_coingecko_at = 0.0
+    datafeed_reported = False
+
     while True:
+        btc_price = 0.0
+        source = 'none'
         try:
-            # 优先尝试 Binance API
-            response = requests.get('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT', timeout=3)
-            if response.status_code == 200:
-                data = response.json()
-                if 'price' in data:
-                    btc_price = float(data['price'])
-                    # 更新市场数据
-                    data_storage.update_market_data({'btc_price': btc_price})
-                    # 广播更新
-                    socketio.emit('all_data', data_storage.get_all_data())
-                    # print(f"BTC 价格更新: ${btc_price}")
-            else:
-                # Binance 失败时尝试 CoinGecko API
-                response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', timeout=3)
-                if response.status_code == 200:
-                    data = response.json()
-                    if 'bitcoin' in data and 'usd' in data['bitcoin']:
-                        btc_price = float(data['bitcoin']['usd'])
-                        # 更新市场数据
-                        data_storage.update_market_data({'btc_price': btc_price})
-                        # 广播更新
-                        socketio.emit('all_data', data_storage.get_all_data())
-                        # print(f"BTC 价格更新 (CoinGecko): ${btc_price}")
+            # 1. 优先 DataFeed 缓存
+            if feeder is not None:
+                price, source = feeder.get_price('BTC')
+                if price is not None and price > 0:
+                    btc_price = float(price)
+                    if not datafeed_reported:
+                        print(f'[Web] DataFeed 首帧到达 BTC={btc_price}')
+                        datafeed_reported = True
+
+            # 2. DataFeed 无数据 → 回退到直接 Binance API
+            if btc_price <= 0:
+                btc_price = _fetch_binance_price()
+                if btc_price > 0:
+                    source = 'api'
+
+            # 3. Binance 也失败 → 回退 CoinGecko
+            if btc_price <= 0:
+                now = time.time()
+                if now >= retry_coingecko_at:
+                    btc_price = _fetch_coingecko_price()
+                    if btc_price > 0:
+                        source = 'coingecko'
+                    retry_coingecko_at = now + 120
+                else:
+                    time.sleep(1)
+                    continue
+
+            if btc_price > 0:
+                source_changed = source != last_source
+                price_changed = abs(btc_price - last_price) > 0.01
+                last_source = source
+                last_price = btc_price
+
+                data_storage.update_market_data({'btc_price': btc_price})
+                now = time.time()
+                should_emit = (source_changed or price_changed
+                               or now - last_emit_time >= EMIT_INTERVAL)
+                if source_changed:
+                    print(f'[Web] BTC 价格源切换: {last_source} -> {source} price={btc_price}')
+                elif abs(btc_price - last_price) > 1000:
+                    print(f'[Web] BTC 价格显著变动 source={source} price={btc_price}')
+                    last_price = btc_price
+                elif now - last_emit_time >= 30.0:
+                    print(f'[Web] BTC 当前 source={source} price={btc_price}')
+                    last_emit_log_time = now
+                if should_emit:
+                    socketio.emit('market_update', {
+                        'market_data': data_storage.market_data,
+                        'strategy_status': data_storage.strategy_status,
+                    })
+                    last_emit_time = now
+
+            if feeder is not None:
+                try:
+                    st = feeder.get_status_log()
+                    if st != last_df_status:
+                        print(f'[Web] {st}')
+                        last_df_status = st
+                except Exception:
+                    pass
+
         except Exception as e:
-            print(f"获取 BTC 价格失败: {e}")
-        # 每 30 秒拉取一次价格
-        time.sleep(30)
+            print(f'[Web] 获取 BTC 价格失败: {e}')
+
+        time.sleep(1)
+
+
+def _fetch_binance_price() -> float:
+    try:
+        response = requests.get(
+            'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT', timeout=3
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return float(data.get('price', 0))
+    except Exception:
+        pass
+    return 0.0
+
+
+def _fetch_coingecko_price() -> float:
+    try:
+        response = requests.get(
+            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+            timeout=3,
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if 'bitcoin' in data and 'usd' in data['bitcoin']:
+                return float(data['bitcoin']['usd'])
+    except Exception:
+        pass
+    return 0.0
 
 global_data = {
     'triangle': triangle_trade_records,
