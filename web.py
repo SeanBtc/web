@@ -749,9 +749,13 @@ def save_spot_data(data):
 
 # 定期检查文件更新的函数
 def check_file_updates():
+    import gc
     top_bottom_file_path = os.path.join(data_dir, 'top_bottom_trades.json')
     spot_file_path = os.path.join(data_dir, 'spot_trades.json')
     total_profit_file_path = os.path.join(data_dir, 'total_profit.json')
+    # GC 节流：每 10 分钟主动回收一次
+    _GC_INTERVAL = 600.0
+    _last_gc = time.monotonic()
     triangle_file_path = os.path.join(data_dir, 'triangle_trades.json')
     legacy_triangle_file_path = os.path.join(data_dir, 'triangle_trades.json')
     lead_file_path = os.path.join(data_dir, 'lead_trades.json')
@@ -879,7 +883,13 @@ def check_file_updates():
                     new_snapshot = json.dumps(data_storage.arbitrage_data, ensure_ascii=False, sort_keys=True)
                     if old_snapshot != new_snapshot:
                         print("套利策略数据已更新")
-            
+
+            # 周期 GC：释放文件读取 / json 解析残留的临时 dict
+            _now = time.monotonic()
+            if _now - _last_gc >= _GC_INTERVAL:
+                _last_gc = _now
+                gc.collect()
+
             # 每 5 秒检查一次
             time.sleep(5)
         except Exception as e:
