@@ -738,6 +738,8 @@ def save_bottom_data(data):
 def check_file_updates():
     import gc
     total_profit_file_path = os.path.join(data_dir, 'total_profit.json')
+    top_file_path = os.path.join(data_dir, 'top_trades.json')
+    bottom_file_path = os.path.join(data_dir, 'bottom_trades.json')
     # GC 节流：每 10 分钟主动回收一次
     _GC_INTERVAL = 600.0
     _last_gc = time.monotonic()
@@ -746,6 +748,8 @@ def check_file_updates():
     lead_file_path = os.path.join(data_dir, 'lead_trades.json')
     arbitrage_file_path = os.path.join(data_dir, 'arbitrage_trades.json')
     last_modified_total_profit = 0
+    last_modified_top = 0
+    last_modified_bottom = 0
     last_modified_triangle = 0
     last_modified_triangle_legacy = 0
     last_modified_lead = 0
@@ -766,6 +770,33 @@ def check_file_updates():
                     if old_snapshot != new_snapshot:
                         print("总盈利数据已更新")
             
+            # 检查摸顶策略文件
+            if os.path.exists(top_file_path):
+                current_modified = os.path.getmtime(top_file_path)
+                if current_modified > last_modified_top:
+                    last_modified_top = current_modified
+                    new_data = load_top_data()
+                    old_snapshot = json.dumps(data_storage.top_data, ensure_ascii=False, sort_keys=True)
+                    data_storage.top_data.update(new_data)
+                    data_storage.strategy_status['top'] = data_storage.top_data.get('status', '持仓')
+                    data_storage.update_global_data()
+                    new_snapshot = json.dumps(data_storage.top_data, ensure_ascii=False, sort_keys=True)
+                    if old_snapshot != new_snapshot:
+                        print("摸顶策略数据已更新")
+
+            # 检查抄底策略文件
+            if os.path.exists(bottom_file_path):
+                current_modified = os.path.getmtime(bottom_file_path)
+                if current_modified > last_modified_bottom:
+                    last_modified_bottom = current_modified
+                    new_data = load_bottom_data()
+                    old_snapshot = json.dumps(data_storage.bottom_data, ensure_ascii=False, sort_keys=True)
+                    data_storage.bottom_data.update(new_data)
+                    data_storage.strategy_status['bottom'] = data_storage.bottom_data.get('status', '清仓')
+                    data_storage.update_global_data()
+                    new_snapshot = json.dumps(data_storage.bottom_data, ensure_ascii=False, sort_keys=True)
+                    if old_snapshot != new_snapshot:
+                        print("抄底策略数据已更新")
 
             
             # 检查三角策略数据文件
