@@ -51,8 +51,6 @@ def _env_int(name, default):
 
 MAX_TRIANGLE_RECORDS = _env_int('WEB_MAX_TRIANGLE_RECORDS', 3000)
 MAX_TRIANGLE_ROUNDS = _env_int('WEB_MAX_TRIANGLE_ROUNDS', 1000)
-MAX_TOP_BOTTOM_RECORDS = _env_int('WEB_MAX_TOP_BOTTOM_RECORDS', 3000)
-MAX_SPOT_RECORDS = _env_int('WEB_MAX_SPOT_RECORDS', 3000)
 MAX_ARBITRAGE_RECORDS = _env_int('WEB_MAX_ARBITRAGE_RECORDS', 5000)
 MAX_LEAD_RECORDS = _env_int('WEB_MAX_LEAD_RECORDS', 5000)
 MAX_PROFIT_CURVE_POINTS = _env_int('WEB_MAX_PROFIT_CURVE_POINTS', 4000)
@@ -289,8 +287,6 @@ def _normalize_lead_trade_record(trade_data):
         'order_id': str(trade_data.get('order_id') or '').strip(),
         'account_id': str(trade_data.get('account_id') or '').strip(),
         'account_label': str(trade_data.get('account_label') or trade_data.get('account_id') or '默认账户').strip(),
-        'account_type': str(trade_data.get('account_type') or '').strip(),
-        'account_profile': str(trade_data.get('account_profile') or '').strip(),
         'symbol': str(trade_data.get('symbol') or '').strip(),
         'side': str(trade_data.get('side') or '').strip().upper(),
         'quantity': round(_to_float(trade_data.get('quantity'), 0.0), 8),
@@ -298,8 +294,6 @@ def _normalize_lead_trade_record(trade_data):
         'trade_type': trade_type,
         'reason': str(trade_data.get('reason') or trade_data.get('alert_message') or '').strip(),
         'timestamp': timestamp,
-        'order_status': str(trade_data.get('order_status') or '').strip(),
-        'signal_id': str(trade_data.get('signal_id') or '').strip(),
         'gross_pnl': trade_data.get('gross_pnl'),
         'realized_pnl': round(_to_float(realized_pnl, order_pnl), 4) if (realized_pnl is not None or order_pnl is not None) else None,
         'order_pnl': round(_to_float(order_pnl, 0.0), 4) if order_pnl is not None else None,
@@ -307,8 +301,6 @@ def _normalize_lead_trade_record(trade_data):
         'close_fee': round(_to_float(trade_data.get('close_fee'), 0.0), 4) if trade_data.get('close_fee') is not None else 0.0,
         'entry_price': _to_float(trade_data.get('entry_price'), None),
         'exit_price': _to_float(trade_data.get('exit_price'), None),
-        'entry_timestamp': str(trade_data.get('entry_timestamp') or '').strip(),
-        'exit_timestamp': str(trade_data.get('exit_timestamp') or '').strip(),
     }
     normalized['order_key'] = _build_lead_record_key(normalized)
     return normalized
@@ -363,8 +355,6 @@ def _normalize_triangle_trade_record(trade_data):
 
     normalized['strategy_type'] = strategy_type
     normalized['strategy_label'] = str(trade_data.get('strategy_label') or '三角策略').strip() or '三角策略'
-    normalized['web_mode'] = 'triangle'
-    normalized['web_category'] = 'triangle'
     normalized['web_strategy_label'] = str(trade_data.get('web_strategy_label') or '三角策略').strip() or '三角策略'
     return normalized
 
@@ -617,30 +607,6 @@ def save_lead_data(data):
     _save_json_if_changed(os.path.join(data_dir, 'lead_trades.json'), data, '带单策略数据')
 
 
-# 从本地文件读取摸顶抄底策略数据
-def load_top_bottom_data():
-    file_path = os.path.join(data_dir, 'top_bottom_trades.json')
-    if os.path.exists(file_path):
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data
-        except Exception as e:
-            print(f"读取摸顶抄底数据失败: {e}")
-    return {'trade_records': []}
-
-# 从本地文件读取现货策略数据
-def load_spot_data():
-    file_path = os.path.join(data_dir, 'spot_trades.json')
-    if os.path.exists(file_path):
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data
-        except Exception as e:
-            print(f"读取现货策略数据失败: {e}")
-    return {'trade_records': []}
-
 # 从本地文件读取总盈亏数据
 def load_total_profit_data():
     file_path = os.path.join(data_dir, 'total_profit.json')
@@ -739,19 +705,38 @@ def load_arbitrage_data():
 def save_arbitrage_data(data):
     _save_json_if_changed(os.path.join(data_dir, 'arbitrage_trades.json'), data, '套利策略数据')
 
-# 将摸顶抄底策略数据保存到本地文件（含现货和DCA定投订单记录）
-def save_top_bottom_data(data):
-    _save_json_if_changed(os.path.join(data_dir, 'top_bottom_trades.json'), data, '摸顶抄底数据')
+def load_top_data():
+    file_path = os.path.join(data_dir, 'top_trades.json')
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"读取摸顶策略数据失败: {e}")
+    return {'position_status': '摸顶做空', 'position_quantity': 0.0, 'position_avg_price': 0.0, 'position_symbol': 'BTCUSDT', 'trade_records': []}
 
-# 将现货策略数据保存到本地文件
-def save_spot_data(data):
-    _save_json_if_changed(os.path.join(data_dir, 'spot_trades.json'), data, '现货策略数据')
+
+def save_top_data(data):
+    _save_json_if_changed(os.path.join(data_dir, 'top_trades.json'), data, '摸顶策略数据')
+
+
+def load_bottom_data():
+    file_path = os.path.join(data_dir, 'bottom_trades.json')
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"读取抄底策略数据失败: {e}")
+    return {'position_status': '抄底做多', 'position_quantity': 0.0, 'position_avg_price': 0.0, 'position_symbol': 'BTCUSDT', 'trade_records': []}
+
+
+def save_bottom_data(data):
+    _save_json_if_changed(os.path.join(data_dir, 'bottom_trades.json'), data, '抄底策略数据')
 
 # 定期检查文件更新的函数
 def check_file_updates():
     import gc
-    top_bottom_file_path = os.path.join(data_dir, 'top_bottom_trades.json')
-    spot_file_path = os.path.join(data_dir, 'spot_trades.json')
     total_profit_file_path = os.path.join(data_dir, 'total_profit.json')
     # GC 节流：每 10 分钟主动回收一次
     _GC_INTERVAL = 600.0
@@ -760,8 +745,6 @@ def check_file_updates():
     legacy_triangle_file_path = os.path.join(data_dir, 'triangle_trades.json')
     lead_file_path = os.path.join(data_dir, 'lead_trades.json')
     arbitrage_file_path = os.path.join(data_dir, 'arbitrage_trades.json')
-    last_modified_top_bottom = 0
-    last_modified_spot = 0
     last_modified_total_profit = 0
     last_modified_triangle = 0
     last_modified_triangle_legacy = 0
@@ -770,40 +753,6 @@ def check_file_updates():
     
     while True:
         try:
-            # 检查摸顶抄底策略文件
-            if os.path.exists(top_bottom_file_path):
-                current_modified = os.path.getmtime(top_bottom_file_path)
-                if current_modified > last_modified_top_bottom:
-                    last_modified_top_bottom = current_modified
-                    new_data = load_top_bottom_data()
-                    old_snapshot = json.dumps(data_storage.top_bottom_data, ensure_ascii=False, sort_keys=True)
-                    data_storage.top_bottom_data['position_status'] = new_data.get('position_status', '摸顶做空')
-                    data_storage.top_bottom_data['position_quantity'] = new_data.get('position_quantity', 0.1)
-                    data_storage.top_bottom_data['position_avg_price'] = new_data.get('position_avg_price', 11600.0)
-                    data_storage.top_bottom_data['position_symbol'] = new_data.get('position_symbol', 'BTCUSDT')
-                    data_storage.top_bottom_data['trade_records'] = new_data.get('trade_records', [])
-                    data_storage.strategy_status['top_bottom'] = new_data.get('position_status', '摸顶做空')
-                    data_storage.update_global_data()
-                    new_snapshot = json.dumps(data_storage.top_bottom_data, ensure_ascii=False, sort_keys=True)
-                    if old_snapshot != new_snapshot:
-                        print("摸顶抄底数据已更新")
-            
-            # 检查现货策略文件
-            if os.path.exists(spot_file_path):
-                current_modified = os.path.getmtime(spot_file_path)
-                if current_modified > last_modified_spot:
-                    last_modified_spot = current_modified
-                    new_data = load_spot_data()
-                    old_snapshot = json.dumps(data_storage.spot_data, ensure_ascii=False, sort_keys=True)
-                    data_storage.spot_data['position_quantity'] = new_data.get('position_quantity', 0.0)
-                    data_storage.spot_data['position_avg_price'] = new_data.get('position_avg_price', 0.0)
-                    data_storage.spot_data['position_symbol'] = new_data.get('position_symbol', 'BTCUSDT')
-                    data_storage.spot_data['trade_records'] = new_data.get('trade_records', [])
-                    data_storage.update_global_data()
-                    new_snapshot = json.dumps(data_storage.spot_data, ensure_ascii=False, sort_keys=True)
-                    if old_snapshot != new_snapshot:
-                        print("现货策略数据已更新")
-            
             # 检查总盈亏数据文件
             if os.path.exists(total_profit_file_path):
                 current_modified = os.path.getmtime(total_profit_file_path)
@@ -897,10 +846,10 @@ def check_file_updates():
             time.sleep(5)
 
 # 全局数据存储
-# 加载摸顶抄底策略数据
-top_bottom_file_data = load_top_bottom_data()
-# 加载现货策略数据
-spot_file_data = load_spot_data()
+# 加载摸顶策略数据
+top_file_data = load_top_data()
+# 加载抄底策略数据
+bottom_file_data = load_bottom_data()
 # 加载总盈亏数据
 total_profit_data = load_total_profit_data()
 # 加载套利策略数据
@@ -1056,29 +1005,18 @@ global_data = {
     'arbitrage_data': arbitrage_data,
     'lead_data': lead_data,
     'total_profit_data': total_profit_data,
-    'top_bottom_data': {
-        'position_status': top_bottom_file_data.get('position_status', '摸顶做空'),  # 当前仓位状态：摸顶做空/抄底做多
-        'position_quantity': top_bottom_file_data.get('position_quantity', 0.17),  # 当前仓位数量
-        'position_avg_price': top_bottom_file_data.get('position_avg_price', 116900.0),  # 当前仓位均价
-        'position_symbol': top_bottom_file_data.get('position_symbol', 'BTCUSDT'),  # 交易对
-        'trade_records': top_bottom_file_data.get('trade_records', [])  # 从本地文件读取交易记录
-    },
-    'spot_data': {
-        'position_quantity': spot_file_data.get('position_quantity', 0.0),  # 当前仓位数量
-        'position_avg_price': spot_file_data.get('position_avg_price', 0.0),  # 当前仓位均价
-        'position_symbol': spot_file_data.get('position_symbol', 'BTCUSDT'),  # 交易对
-        'trade_records': spot_file_data.get('trade_records', [])  # 从本地文件读取交易记录
-    },
+    'top_data': top_file_data,
+    'bottom_data': bottom_file_data,
     'strategy_status': {
         'lead': '运行',
         'triangle': '运行',
         'arbitrage': '运行',
-        'top_bottom': top_bottom_file_data.get('position_status', '摸顶做空'),  # 摸顶抄底策略状态：摸顶做空/抄底做多/空仓
-        'spot': '空仓'           # 现货策略状态：满仓/建仓/空仓
+        'top': top_file_data.get('status', '持仓'),
+        'bottom': bottom_file_data.get('status', '清仓'),
     },
     'market_data': {
-        'cycle': '熊',  # 牛熊周期判断：牛/熊
-        'btc_price': 68000.0  # 当前 BTCUSDT 价格
+        'cycle': '牛',
+        'btc_price': 58000.0
     }
 }
 
@@ -1091,8 +1029,8 @@ class DataStorage:
         self.arbitrage_data = global_data['arbitrage_data']
         self.lead_data = global_data['lead_data']
         self.total_profit_data = global_data['total_profit_data']
-        self.top_bottom_data = global_data['top_bottom_data']
-        self.spot_data = global_data['spot_data']
+        self.top_data = global_data['top_data']
+        self.bottom_data = global_data['bottom_data']
         self.strategy_status = global_data['strategy_status']
         self.market_data = global_data['market_data']
         self.arbitrage_start_time = None  # 套利策略启动时间
@@ -1111,11 +1049,6 @@ class DataStorage:
     def _apply_memory_limits(self):
         _trim_list_inplace(self.triangle_data, MAX_TRIANGLE_RECORDS, keep='head')
         _trim_list_inplace(self.triangle_rounds, MAX_TRIANGLE_ROUNDS, keep='head')
-
-        if isinstance(self.top_bottom_data, dict):
-            _trim_list_inplace(self.top_bottom_data.get('trade_records'), MAX_TOP_BOTTOM_RECORDS, keep='head')
-        if isinstance(self.spot_data, dict):
-            _trim_list_inplace(self.spot_data.get('trade_records'), MAX_SPOT_RECORDS, keep='head')
 
         if isinstance(self.arbitrage_data, dict):
             records = self.arbitrage_data.get('trade_records')
@@ -1166,19 +1099,14 @@ class DataStorage:
     def update_global_data(self):
         global global_data
         self._apply_memory_limits()
-        triangle_payload = {
-            'trade_records': self.triangle_data,
-            'round_records': self.triangle_rounds,
-            'summary': self.triangle_summary,
-        }
         global_data['triangle'] = self.triangle_data
         global_data['triangle_summary'] = self.triangle_summary
         global_data['triangle_rounds'] = self.triangle_rounds
         global_data['arbitrage_data'] = self.arbitrage_data
         global_data['lead_data'] = self.lead_data
         global_data['total_profit_data'] = self.total_profit_data
-        global_data['top_bottom_data'] = self.top_bottom_data
-        global_data['spot_data'] = self.spot_data
+        global_data['top_data'] = self.top_data
+        global_data['bottom_data'] = self.bottom_data
         global_data['strategy_status'] = self.strategy_status
         global_data['market_data'] = self.market_data
         global_data['arbitrage_start_time'] = self.arbitrage_start_time
@@ -1522,90 +1450,34 @@ class DataStorage:
         self.update_global_data()
         return True
     
-    def update_top_bottom_data(self, data):
-        if 'position_status' in data:
-            self.top_bottom_data['position_status'] = data['position_status']
-        if 'position_quantity' in data:
-            self.top_bottom_data['position_quantity'] = data['position_quantity']
-        if 'position_avg_price' in data:
-            self.top_bottom_data['position_avg_price'] = data['position_avg_price']
-        if 'position_symbol' in data:
-            self.top_bottom_data['position_symbol'] = data['position_symbol']
-        if 'trade_records' in data:
-            self.top_bottom_data['trade_records'] = data['trade_records']
+    def update_top_data(self, data):
+        for key in ('position_status', 'position_quantity', 'position_avg_price', 'position_symbol', 'trade_records', 'status'):
+            if key in data:
+                self.top_data[key] = data[key]
+        self.strategy_status['top'] = self.top_data.get('status', '持仓')
         self.update_global_data()
-        save_top_bottom_data(self.top_bottom_data)
+        save_top_data(self.top_data)
         return True
-    
-    def add_top_bottom_trade(self, trade_data):
-        # 确保 trade_data 包含必要字段
-        required_fields = ['mode', 'quantity', 'avg_price', 'is_closed', 'profit']
-        for field in required_fields:
-            if field not in trade_data:
-                return False
-        
-        # 添加时间戳
-        trade_data['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-        
-        # 如果已平仓，补充平仓时间戳
-        if trade_data.get('is_closed'):
-            trade_data['close_timestamp'] = trade_data.get('close_timestamp', datetime.now().strftime('%Y-%m-%d-%H:%M:%S'))
-        
-        # 插入到列表头部，实现最新记录优先显示
-        self.top_bottom_data['trade_records'].insert(0, trade_data)
-        _trim_list_inplace(self.top_bottom_data.get('trade_records'), MAX_TOP_BOTTOM_RECORDS, keep='head')
-        
+
+    def update_bottom_data(self, data):
+        for key in ('position_status', 'position_quantity', 'position_avg_price', 'position_symbol', 'trade_records', 'status'):
+            if key in data:
+                self.bottom_data[key] = data[key]
+        self.strategy_status['bottom'] = self.bottom_data.get('status', '清仓')
         self.update_global_data()
-        save_top_bottom_data(self.top_bottom_data)
-        return True
-    
-    def update_spot_data(self, data):
-        if 'position_quantity' in data:
-            self.spot_data['position_quantity'] = data['position_quantity']
-        if 'position_avg_price' in data:
-            self.spot_data['position_avg_price'] = data['position_avg_price']
-        if 'position_symbol' in data:
-            self.spot_data['position_symbol'] = data['position_symbol']
-        if 'trade_records' in data:
-            self.spot_data['trade_records'] = data['trade_records']
-        self.update_global_data()
-        save_spot_data(self.spot_data)
-        return True
-    
-    def add_spot_trade(self, trade_data):
-        # 确保 trade_data 包含必要字段
-        required_fields = ['quantity', 'avg_price', 'is_closed', 'profit']
-        for field in required_fields:
-            if field not in trade_data:
-                return False
-        
-        # 添加时间戳
-        trade_data['timestamp'] = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-        
-        # 如果已平仓，补充平仓时间戳
-        if trade_data.get('is_closed'):
-            trade_data['close_timestamp'] = trade_data.get('close_timestamp', datetime.now().strftime('%Y-%m-%d-%H:%M:%S'))
-        
-        # 插入到列表头部，实现最新记录优先显示
-        self.spot_data['trade_records'].insert(0, trade_data)
-        _trim_list_inplace(self.spot_data.get('trade_records'), MAX_SPOT_RECORDS, keep='head')
-        
-        self.update_global_data()
-        save_spot_data(self.spot_data)
+        save_bottom_data(self.bottom_data)
         return True
     
     def get_all_data(self):
         return {
-            'triangle': self.triangle_data,
-            'triangle_summary': self.triangle_summary,
             'triangle': self.triangle_data,
             'triangle_rounds': self.triangle_rounds,
             'triangle_summary': self.triangle_summary,
             'lead': self.lead_data,
             'arbitrage': self.arbitrage_data,
             'total_profit': self.total_profit_data,
-            'top_bottom': self.top_bottom_data,
-            'spot': self.spot_data,
+            'top': self.top_data,
+            'bottom': self.bottom_data,
             'strategy_status': self.strategy_status,
             'market_data': self.market_data,
             'arbitrage_start_time': self.arbitrage_start_time
@@ -1684,41 +1556,21 @@ def update_market_data():
             return jsonify({'status': 'success'})
     return jsonify({'status': 'error'}), 400
 
-@app.route('/api/update_top_bottom', methods=['POST'])
-def update_top_bottom_data():
+@app.route('/api/update_top', methods=['POST'])
+def update_top_data():
     data = request.json
     if data:
-        success = data_storage.update_top_bottom_data(data)
+        success = data_storage.update_top_data(data)
         if success:
             socketio.emit('all_data', data_storage.get_all_data())
             return jsonify({'status': 'success'})
     return jsonify({'status': 'error'}), 400
 
-@app.route('/api/add_top_bottom_trade', methods=['POST'])
-def add_top_bottom_trade():
+@app.route('/api/update_bottom', methods=['POST'])
+def update_bottom_data():
     data = request.json
     if data:
-        success = data_storage.add_top_bottom_trade(data)
-        if success:
-            socketio.emit('all_data', data_storage.get_all_data())
-            return jsonify({'status': 'success'})
-    return jsonify({'status': 'error'}), 400
-
-@app.route('/api/update_spot', methods=['POST'])
-def update_spot_data():
-    data = request.json
-    if data:
-        success = data_storage.update_spot_data(data)
-        if success:
-            socketio.emit('all_data', data_storage.get_all_data())
-            return jsonify({'status': 'success'})
-    return jsonify({'status': 'error'}), 400
-
-@app.route('/api/add_spot_trade', methods=['POST'])
-def add_spot_trade():
-    data = request.json
-    if data:
-        success = data_storage.add_spot_trade(data)
+        success = data_storage.update_bottom_data(data)
         if success:
             socketio.emit('all_data', data_storage.get_all_data())
             return jsonify({'status': 'success'})

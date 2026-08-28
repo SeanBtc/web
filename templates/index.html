@@ -214,7 +214,9 @@
         #lead-section,
         #arbitrage-section,
         #triangle-section,
-        #top-bottom-section {
+        #top-bottom-section,
+        #top-section,
+        #bottom-section {
             border: 1px solid rgba(255, 255, 255, 0.78);
             box-shadow: var(--panel-shadow);
             backdrop-filter: saturate(180%) blur(28px);
@@ -222,7 +224,9 @@
         #lead-section,
         #arbitrage-section,
         #triangle-section,
-        #top-bottom-section {
+        #top-bottom-section,
+        #top-section,
+        #bottom-section {
             position: relative;
             overflow: hidden;
             background:
@@ -241,7 +245,9 @@
         #lead-section::before,
         #arbitrage-section::before,
         #triangle-section::before,
-        #top-bottom-section::before {
+        #top-bottom-section::before,
+        #top-section::before,
+        #bottom-section::before {
             content: '';
             position: absolute;
             top: 0;
@@ -252,7 +258,9 @@
         #lead-section::after,
         #arbitrage-section::after,
         #triangle-section::after,
-        #top-bottom-section::after {
+        #top-bottom-section::after,
+        #top-section::after,
+        #bottom-section::after {
             content: '';
             position: absolute;
             inset: 12px;
@@ -269,14 +277,20 @@
         #triangle-section::before {
             background: linear-gradient(90deg, rgba(0, 113, 227, 0.32), rgba(0, 113, 227, 0.05));
         }
-        #top-bottom-section::before {
+        #top-bottom-section::before,
+        #top-section::before {
+            background: linear-gradient(90deg, rgba(255, 159, 10, 0.28), rgba(255, 159, 10, 0.04));
+        }
+        #bottom-section::before {
             background: linear-gradient(90deg, rgba(255, 159, 10, 0.28), rgba(255, 159, 10, 0.04));
         }
         .panel-shell .bg-gray-50,
         #lead-section .bg-gray-50,
         #arbitrage-section .bg-gray-50,
         #triangle-section .bg-gray-50,
-        #top-bottom-section .bg-gray-50 {
+        #top-bottom-section .bg-gray-50,
+        #top-section .bg-gray-50,
+        #bottom-section .bg-gray-50 {
             background: linear-gradient(180deg, rgba(245, 245, 247, 0.88) 0%, rgba(255, 255, 255, 0.74) 100%);
             border: 1px solid rgba(17, 17, 17, 0.05);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
@@ -422,10 +436,12 @@
             #summary-section { order: 1; }
             #total-curve-section { order: 2; }
             #yearly-curve-section { order: 3; }
-            #triangle-section { order: 4; }
+            #triangle-section { order: 4; display: none; }
             #lead-section { order: 5; }
-            #top-bottom-section { order: 6; }
-            #report-section { order: 7; }
+            #top-section { order: 6; }
+            #bottom-section { order: 7; }
+            #top-bottom-section { order: 6; display: none; }
+            #report-section { order: 8; }
 
             .compact-table-container {
                 max-height: 400px;
@@ -599,7 +615,23 @@
                 overflow: auto;
             }
 
+            #arbitrage-section {
+                display: none !important;
+            }
+
+            #triangle-section {
+                display: none !important;
+            }
+
             #lead-section {
+                grid-column: 1;
+                grid-row: 1 / 5;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            #top-section {
                 grid-column: 3;
                 grid-row: 1 / 3;
                 display: flex;
@@ -607,19 +639,7 @@
                 overflow: hidden;
             }
 
-            #arbitrage-section {
-                display: none !important;
-            }
-
-            #triangle-section {
-                grid-column: 1;
-                grid-row: 1 / 5;
-                display: grid;
-                grid-template-rows: auto minmax(0, 1fr);
-                overflow: hidden;
-            }
-
-            #top-bottom-section {
+            #bottom-section {
                 grid-column: 3;
                 grid-row: 3 / 5;
                 display: flex;
@@ -648,15 +668,23 @@
             #lead-section,
             #arbitrage-section,
             #triangle-section,
-            #top-bottom-section {
-                padding: 0.72rem;
+            #top-bottom-section,
+            #top-section,
+            #bottom-section {
+                padding: 0.5rem;
             }
 
             #lead-section > .mb-6,
             #arbitrage-section > .mb-6,
             #triangle-section > .mb-6,
-            #top-bottom-section > .mb-6 {
+            #top-bottom-section > .mb-6,
+            #top-section > .mb-6,
+            #bottom-section > .mb-6 {
                 margin-bottom: 0.52rem !important;
+            }
+            #top-section > .mb-2,
+            #bottom-section > .mb-2 {
+                margin-bottom: 0.3rem !important;
             }
 
             #lead-section > .mb-6 p,
@@ -673,14 +701,18 @@
             #lead-section > .bg-white,
             #arbitrage-section > .bg-white,
             #triangle-section > .bg-white,
-            #top-bottom-section > .grid {
-                margin-bottom: 0.52rem !important;
+            #top-bottom-section > .grid,
+            #top-section > .grid,
+            #bottom-section > .grid {
+                margin-bottom: 0.3rem !important;
             }
 
             #lead-section .bg-white.p-6,
             #arbitrage-section .bg-white.p-6,
             #triangle-section .bg-white.p-6,
             #top-bottom-section .bg-white.p-6,
+            #top-section .bg-white.p-6,
+            #bottom-section .bg-white.p-6,
             #report-section .p-6 {
                 padding: 0.7rem !important;
             }
@@ -741,7 +773,9 @@
             #summary-section .dashboard-stat-card,
             #lead-section .dashboard-stat-card,
             #triangle-section .dashboard-stat-card,
-            #top-bottom-section .dashboard-stat-card {
+            #top-bottom-section .dashboard-stat-card,
+            #top-section .dashboard-stat-card,
+            #bottom-section .dashboard-stat-card {
                 min-height: 5rem;
                 border-radius: 1rem;
             }
@@ -749,27 +783,35 @@
             #summary-section .dashboard-metric-label,
             #lead-section .dashboard-metric-label,
             #triangle-section .dashboard-metric-label,
-            #top-bottom-section .dashboard-metric-label {
+            #top-bottom-section .dashboard-metric-label,
+            #top-section .dashboard-metric-label,
+            #bottom-section .dashboard-metric-label {
                 font-size: 0.64rem;
             }
 
             #summary-section .dashboard-metric-value,
             #lead-section .dashboard-metric-value,
             #triangle-section .dashboard-metric-value,
-            #top-bottom-section .dashboard-metric-value {
+            #top-bottom-section .dashboard-metric-value,
+            #top-section .dashboard-metric-value,
+            #bottom-section .dashboard-metric-value {
                 font-size: 1rem;
             }
 
             #lead-section .grid.grid-cols-1.md\:grid-cols-3,
             #triangle-section .grid.grid-cols-1.md\:grid-cols-4,
             #top-bottom-section .grid.grid-cols-2.md\:grid-cols-4,
-            #top-bottom-section .grid.grid-cols-1.md\:grid-cols-5 {
+            #top-bottom-section .grid.grid-cols-1.md\:grid-cols-5,
+            #top-section .grid.grid-cols-2.md\:grid-cols-4,
+            #bottom-section .grid.grid-cols-2.md\:grid-cols-4 {
                 gap: 0.72rem !important;
             }
 
             #lead-section > .mb-6 .w-10,
             #triangle-section > .mb-6 .w-10,
-            #top-bottom-section > .mb-6 .w-10 {
+            #top-bottom-section > .mb-6 .w-10,
+            #top-section > .mb-6 .w-10,
+            #bottom-section > .mb-6 .w-10 {
                 width: 2.4rem !important;
                 height: 2.4rem !important;
                 margin-right: 0.7rem !important;
@@ -779,6 +821,8 @@
             #lead-section > .mb-6 h3,
             #triangle-section > .mb-6 h3,
             #top-bottom-section > .mb-6 h3,
+            #top-section > .mb-6 h3,
+            #bottom-section > .mb-6 h3,
             #summary-section h3,
             #total-curve-section h3,
             #yearly-curve-section h3,
@@ -791,9 +835,13 @@
             #lead-section .record-card h4,
             #triangle-section .record-card h4,
             #top-bottom-section .record-card h4,
+            #top-section .record-card h4,
+            #bottom-section .record-card h4,
             #lead-section > .bg-white h4,
             #triangle-section > .bg-white h4,
-            #top-bottom-section > .grid h4 {
+            #top-bottom-section > .grid h4,
+            #top-section > .bg-white h4,
+            #bottom-section > .grid h4 {
                 font-size: 0.88rem !important;
                 line-height: 1.16rem !important;
                 letter-spacing: -0.02em;
@@ -801,7 +849,9 @@
 
             #lead-section .table-container,
             #triangle-section .table-container,
-            #top-bottom-section .table-container {
+            #top-bottom-section .table-container,
+            #top-section .table-container,
+            #bottom-section .table-container {
                 border-radius: 0.95rem;
             }
 
@@ -850,6 +900,114 @@
                 padding-bottom: 0.25rem !important;
             }
         }
+
+        /* ========== 渐变背景 ========== */
+        #lead-section {
+            background: linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(59,130,246,0.06) 100%) !important;
+            border: 1px solid rgba(6,182,212,0.15) !important;
+        }
+        #lead-section::before {
+            background: linear-gradient(90deg, rgba(6,182,212,0.5), rgba(59,130,246,0.1)) !important;
+            height: 3px !important;
+        }
+        #top-section {
+            background: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(249,115,22,0.08) 100%) !important;
+            border: 1px solid rgba(239,68,68,0.12) !important;
+        }
+        #top-section::before {
+            background: linear-gradient(90deg, rgba(239,68,68,0.5), rgba(249,115,22,0.1)) !important;
+            height: 3px !important;
+        }
+        #bottom-section {
+            background: linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(16,185,129,0.08) 100%) !important;
+            border: 1px solid rgba(34,197,94,0.12) !important;
+        }
+        #bottom-section::before {
+            background: linear-gradient(90deg, rgba(34,197,94,0.5), rgba(16,185,129,0.1)) !important;
+            height: 3px !important;
+        }
+        #lead-section .bg-white,
+        #top-section .bg-white,
+        #bottom-section .bg-white {
+            background: rgba(255,255,255,0.9) !important;
+            border: 1px solid rgba(0,0,0,0.04) !important;
+        }
+        #lead-section .bg-gray-50,
+        #top-section .bg-gray-50,
+        #bottom-section .bg-gray-50 {
+            background: rgba(255,255,255,0.7) !important;
+        }
+
+        /* 摸顶/抄底: flex column 布局, 数据区压缩, 表格区占 2/3 */
+        #top-section, #bottom-section {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+        }
+        #top-section > .mb-2,
+        #bottom-section > .mb-2 {
+            margin-bottom: 0.2rem !important;
+            flex-shrink: 1;
+        }
+        #top-section > .mb-2 > .flex,
+        #bottom-section > .mb-2 > .flex {
+            margin-bottom: 0.15rem !important;
+        }
+        #top-section .grid.grid-cols-1.md\:grid-cols-4,
+        #bottom-section .grid.grid-cols-1.md\:grid-cols-4,
+        #top-section .grid.grid-cols-1.md\:grid-cols-5,
+        #bottom-section .grid.grid-cols-1.md\:grid-cols-5 {
+            gap: 0.2rem !important;
+            margin-bottom: 0.2rem !important;
+            flex-shrink: 1;
+        }
+        #top-section .grid .bg-white,
+        #bottom-section .grid .bg-white {
+            padding: 0.3rem 0.4rem !important;
+        }
+        #top-section .grid .bg-white h4,
+        #bottom-section .grid .bg-white h4 {
+            font-size: 0.65rem !important;
+            margin-bottom: 0.15rem !important;
+        }
+        #top-section .grid .dashboard-stat-card,
+        #bottom-section .grid .dashboard-stat-card {
+            min-height: 1.8rem !important;
+            padding: 0.2rem 0.3rem !important;
+        }
+        #top-section .grid .dashboard-metric-label,
+        #bottom-section .grid .dashboard-metric-label {
+            font-size: 0.5rem !important;
+            margin-bottom: 0 !important;
+        }
+        #top-section .grid .dashboard-metric-value,
+        #bottom-section .grid .dashboard-metric-value {
+            font-size: 0.7rem !important;
+        }
+        /* 表格区占剩余空间 2/3 */
+        #top-section > .record-card,
+        #bottom-section > .record-card {
+            flex: 2 1 0 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        #top-section > .record-card > h4,
+        #bottom-section > .record-card > h4 {
+            font-size: 0.8rem !important;
+            margin-bottom: 0.3rem !important;
+            flex-shrink: 1;
+        }
+        #top-section > .record-card > .table-container,
+        #bottom-section > .record-card > .table-container {
+            flex: 1 1 0 !important;
+            min-height: 0 !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow-y: auto !important;
+        }
+
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen dashboard-body">
@@ -944,7 +1102,6 @@
                     </div>
                     <h3 class="text-lg font-semibold text-dark">带单模块</h3>
                 </div>
-                <p class="text-gray-600 mb-3 section-intro">同步 lead 账号订单。</p>
                 <div class="flex items-center mb-4">
                     <span class="text-xs font-medium text-gray-500 mr-2">状态:</span>
                     <span class="px-2 py-1 rounded-full text-xs font-semibold" id="lead-status">运行</span>
@@ -1063,7 +1220,7 @@
         </section>
 
         <!-- 三角策略模块 -->
-        <section id="triangle-section" class="mb-12 bg-gray-100 rounded-xl p-6 panel-section">
+        <section id="triangle-section" class="mb-12 bg-gray-100 rounded-xl p-6 panel-section strategy-hidden" aria-hidden="true">
             <div class="mb-6">
                 <div class="flex items-center mb-3">
                     <div class="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mr-3">
@@ -1172,8 +1329,154 @@
             </div>
         </section>
 
-        <!-- 摸顶抄底策略模块 -->
-        <section id="top-bottom-section" class="mb-12 bg-gray-100 rounded-xl p-6 panel-section">
+        <!-- 摸顶策略模块 -->
+        <section id="top-section" class="mb-12 bg-gray-100 rounded-xl p-6 panel-section">
+            <div class="mb-2">
+                <div class="flex items-center mb-1">
+                    <div class="w-7 h-7 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
+                        <i class="fa fa-line-chart text-accent text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-dark">摸顶策略</h3>
+                </div>
+                <div class="flex items-center mb-2">
+                    <span class="text-xs font-medium text-gray-500 mr-2">状态:</span>
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold" id="top-status">摸顶做空</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-md p-6 md:col-span-1">
+                    <h4 class="text-lg font-semibold text-dark mb-4">策略总盈亏</h4>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">收益</div>
+                            <div class="text-lg font-bold text-green-600 dashboard-metric-value" id="top-total-profit">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 md:col-span-3">
+                    <h4 class="text-lg font-semibold text-dark mb-3">当前持仓</h4>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">当前仓位数量</div>
+                            <div class="text-md font-bold text-dark dashboard-metric-value" id="top-quantity"></div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">当前仓位均价</div>
+                            <div class="text-md font-bold text-dark dashboard-metric-value" id="top-avg-price">$</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">浮盈</div>
+                            <div class="text-md font-bold dashboard-metric-value" id="top-float-profit">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 flex-1 min-h-0 record-card">
+                <h4 class="text-lg font-semibold text-dark mb-4">交易记录</h4>
+                <div class="table-container overflow-x-auto compact-table-container">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">周期</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模式</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">仓位</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">均价</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">平仓时间</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">盈亏</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="top-tbody">
+                            <tr>
+                                <td colspan="7" class="px-3 py-4 text-center text-gray-500">
+                                    <i class="fa fa-info-circle text-lg mb-1"></i>
+                                    <p>暂无交易记录</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 抄底策略模块 -->
+        <section id="bottom-section" class="mb-12 bg-gray-100 rounded-xl p-6 panel-section">
+            <div class="mb-2">
+                <div class="flex items-center mb-1">
+                    <div class="w-7 h-7 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
+                        <i class="fa fa-line-chart text-accent text-sm"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-dark">抄底策略</h3>
+                </div>
+                <div class="flex items-center mb-2">
+                    <span class="text-xs font-medium text-gray-500 mr-2">状态:</span>
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold" id="bottom-status">抄底做多</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-md p-6 md:col-span-1">
+                    <h4 class="text-lg font-semibold text-dark mb-4">策略总盈亏</h4>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">收益</div>
+                            <div class="text-lg font-bold text-green-600 dashboard-metric-value" id="bottom-total-profit">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 md:col-span-4">
+                    <h4 class="text-lg font-semibold text-dark mb-3">当前持仓</h4>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">当前仓位数量</div>
+                            <div class="text-md font-bold text-dark dashboard-metric-value" id="bottom-quantity"></div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">当前仓位均价</div>
+                            <div class="text-md font-bold text-dark dashboard-metric-value" id="bottom-avg-price">$</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 dashboard-stat-card">
+                            <div class="text-xs text-gray-500 mb-1 dashboard-metric-label">浮盈</div>
+                            <div class="text-md font-bold dashboard-metric-value" id="bottom-float-profit">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 flex-1 min-h-0 record-card">
+                <h4 class="text-lg font-semibold text-dark mb-4">交易记录</h4>
+                <div class="table-container overflow-x-auto compact-table-container">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">周期</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模式</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">仓位</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">均价</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">平仓时间</th>
+                                <th scope="col" class="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">盈亏</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="bottom-tbody">
+                            <tr>
+                                <td colspan="7" class="px-3 py-4 text-center text-gray-500">
+                                    <i class="fa fa-info-circle text-lg mb-1"></i>
+                                    <p>暂无交易记录</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 原摸顶抄底策略模块（已拆分，保留旧ID隐藏） -->
+        <section id="top-bottom-section" class="mb-12 bg-gray-100 rounded-xl p-6 panel-section strategy-hidden" aria-hidden="true">
             <div class="mb-6">
                 <div class="flex items-center mb-3">
                     <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
@@ -1731,8 +2034,8 @@
             }
             
             // 更新摸顶抄底策略数据
-            updateTopBottomData(data);
-            updateTopBottomTable(data);
+            updateTopData(data);
+            updateBottomData(data);
             
             // 更新策略状态
             updateStrategyStatus(data);
@@ -2233,29 +2536,60 @@
             document.getElementById('yearly-return-profit').textContent = formatMoney(yearlyReturnProfit);
         }
         
+        const STATUS_COLORS = {
+            '建仓': 'bg-blue-100 text-blue-800',
+            '持仓': 'bg-green-100 text-green-800',
+            '减仓': 'bg-orange-100 text-orange-800',
+            '清仓': 'bg-gray-100 text-gray-800'
+        };
+        const STATUS_LIST = ['建仓', '持仓', '减仓', '清仓'];
+
+        function getStatusClass(status) {
+            return STATUS_COLORS[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function cycleStatus(currentStatus) {
+            const idx = STATUS_LIST.indexOf(currentStatus);
+            return STATUS_LIST[(idx + 1) % STATUS_LIST.length];
+        }
+
+        function updateStatusBadge(el, status) {
+            if (!el) return;
+            el.textContent = status;
+            el.className = 'px-2 py-1 rounded-full text-xs font-semibold cursor-pointer select-none ' + getStatusClass(status);
+        }
+
+        // 点击切换状态
+        function setupStatusClick(el, dataKey) {
+            if (!el) return;
+            el.onclick = function() {
+                const newStatus = cycleStatus(el.textContent);
+                fetch('/api/update_' + dataKey, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({status: newStatus})
+                });
+            };
+        }
+
         // 更新策略状态
         function updateStrategyStatus(data) {
             if (!data.strategy_status) return;
-            
             const statusMap = {
                 'lead': 'lead-status',
                 'triangle': 'triangle-status',
-                'triangle': 'triangle-status',
-                'arbitrage': 'arbitrage-status',
-                'top_bottom': 'top-bottom-status'
+                'arbitrage': 'arbitrage-status'
             };
-            
             Object.entries(data.strategy_status).forEach(([strategy, status]) => {
                 const elementId = statusMap[strategy];
                 if (elementId) {
                     const element = document.getElementById(elementId);
                     if (element) {
                         element.textContent = status;
-                        // 根据状态设置不同的颜色
                         element.className = 'px-2 py-1 rounded-full text-xs font-semibold';
-                        if (status === '做空' || status === '摸顶做空' || status === '运行' || status === '满仓' || status === '建仓' || status === '做多' || status === '抄底做多') {
+                        if (status === '运行' || status === '建仓' || status === '持仓') {
                             element.classList.add('bg-green-100', 'text-green-800');
-                        } else if (status === '暂停' || status === '空仓') {
+                        } else if (status === '暂停' || status === '空仓' || status === '清仓') {
                             element.classList.add('bg-red-100', 'text-red-800');
                         }
                     }
@@ -2294,174 +2628,140 @@
         
 
         
-        // 更新摸顶抄底策略数据
-        function updateTopBottomData(data) {
-            if (!data) return;
-            const topBottomData = data.top_bottom || data;
-            if (!topBottomData) return;
-            console.log('摸顶抄底数据:', topBottomData);
+        // 更新摸顶策略数据
+        function updateTopData(data) {
+            const topData = data.top || {};
+            const records = topData.trade_records || [];
 
-            const isDca = topBottomData.source === 'spot_dca';
+            // 更新状态徽章
+            const topStatusEl = document.getElementById('top-status');
+            updateStatusBadge(topStatusEl, topData.status || '持仓');
+            setupStatusClick(topStatusEl, 'top');
 
-            const topBottomTotalProfit = (topBottomData.trade_records || []).reduce((sum, trade) => {
-                return sum + (parseFloat(trade.profit) || 0);
-            }, 0);
-            const topBottomTotalProfitElement = document.getElementById('top-bottom-total-profit');
-            if (topBottomTotalProfitElement) {
-                topBottomTotalProfitElement.textContent = isDca ?
-                    (topBottomData.dca_progress || 0).toFixed(1) + '%' :
-                    formatMoney(topBottomTotalProfit);
-                topBottomTotalProfitElement.className = 'text-lg font-bold ' + (isDca ? 'text-blue-600' : (topBottomTotalProfit >= 0 ? 'text-green-600' : 'text-red-600'));
+            // 计算总收益
+            const totalProfit = records.reduce((sum, t) => sum + (parseFloat(t.profit) || 0), 0);
+
+            // 更新策略总盈亏
+            const totalProfitEl = document.getElementById('top-total-profit');
+            if (totalProfitEl) {
+                totalProfitEl.textContent = formatMoney(totalProfit);
+                totalProfitEl.className = 'text-lg font-bold ' + (totalProfit >= 0 ? 'text-green-600' : 'text-red-600');
             }
 
-            const statusElement = document.getElementById('top-bottom-status-display');
-            if (statusElement) {
-                const posStatus = isDca ?
-                    (topBottomData.strategy_label || topBottomData.position_status || '未知') :
-                    (topBottomData.position_status || '未知');
-                const modeText = isDca ? (topBottomData.execution_mode_text || '') : '';
-                statusElement.textContent = posStatus + (modeText ? ' | ' + modeText : '');
+            // 更新当前持仓
+            const quantityEl = document.getElementById('top-quantity');
+            if (quantityEl) {
+                quantityEl.textContent = formatQuantity(topData.position_quantity || 0) + ' BTC';
+            }
+            const avgPriceEl = document.getElementById('top-avg-price');
+            if (avgPriceEl) {
+                avgPriceEl.textContent = formatMoney(parseFloat(topData.position_avg_price) || 0);
             }
 
-            const quantityElement = document.getElementById('top-bottom-quantity');
-            if (quantityElement) {
-                if (isDca) {
-                    const qty = parseFloat(topBottomData.position_quantity) || 0;
-                    if (topBottomData.use_quantity_mode) {
-                        quantityElement.textContent = formatQuantity(qty) + ' ' + (topBottomData.position_symbol || '');
-                    } else {
-                        quantityElement.textContent = formatMoney(qty) + ' USDT';
+            // 浮盈
+            const priceEl = document.getElementById('btc-price');
+            if (priceEl) {
+                const currentPrice = parseFloat(priceEl.textContent.replace('$', '').replace(',', ''));
+                if (!isNaN(currentPrice)) {
+                    const floatEl = document.getElementById('top-float-profit');
+                    if (floatEl) {
+                        let floatProfit = 0;
+                        if ((topData.position_status || '').includes('做空')) {
+                            floatProfit = (parseFloat(topData.position_avg_price) || 0 - currentPrice) * (topData.position_quantity || 0);
+                        } else if ((topData.position_status || '').includes('做多')) {
+                            floatProfit = (currentPrice - (parseFloat(topData.position_avg_price) || 0)) * (topData.position_quantity || 0);
+                        }
+                        floatEl.textContent = formatMoney(floatProfit);
+                        floatEl.className = 'text-md font-bold ' + (floatProfit >= 0 ? 'text-green-600' : 'text-red-600');
                     }
-                } else {
-                    quantityElement.textContent = formatQuantity(topBottomData.position_quantity || 0) + ' BTC';
                 }
             }
 
-            const avgPriceElement = document.getElementById('top-bottom-avg-price');
-            if (avgPriceElement) {
-                const avgPrice = parseFloat(topBottomData.position_avg_price) || 0;
-                avgPriceElement.textContent = formatMoney(avgPrice);
-                if (isDca && topBottomData.dca_progress !== undefined) {
-                    avgPriceElement.textContent += ' | 进度 ' + topBottomData.dca_progress.toFixed(1) + '%';
-                }
-            }
-
-            calculateFloatProfit(topBottomData, isDca);
+            // 渲染表格
+            renderTopBottomTable('top-tbody', records);
         }
-        
-        function updateTopBottomTable(data) {
-            const tbody = document.getElementById('top-bottom-tbody');
-            const topBottomData = data.top_bottom || data;
-            const tradeRecords = topBottomData.trade_records || [];
-            const isDca = topBottomData.source === 'spot_dca';
 
-            if (tradeRecords.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                            <i class="fa fa-info-circle text-2xl mb-2"></i>
-                            <p>暂无交易记录</p>
-                        </td>
-                    </tr>
-                `;
+        // 更新抄底策略数据
+        function updateBottomData(data) {
+            const bottomData = data.bottom || {};
+            const records = bottomData.trade_records || [];
+
+            // 更新状态徽章
+            const bottomStatusEl = document.getElementById('bottom-status');
+            updateStatusBadge(bottomStatusEl, bottomData.status || '清仓');
+            setupStatusClick(bottomStatusEl, 'bottom');
+
+            const totalProfit = records.reduce((sum, t) => sum + (parseFloat(t.profit) || 0), 0);
+
+            const totalProfitEl = document.getElementById('bottom-total-profit');
+            if (totalProfitEl) {
+                totalProfitEl.textContent = formatMoney(totalProfit);
+                totalProfitEl.className = 'text-lg font-bold ' + (totalProfit >= 0 ? 'text-green-600' : 'text-red-600');
+            }
+
+            const quantityEl = document.getElementById('bottom-quantity');
+            if (quantityEl) {
+                quantityEl.textContent = formatQuantity(bottomData.position_quantity || 0) + ' BTC';
+            }
+            const avgPriceEl = document.getElementById('bottom-avg-price');
+            if (avgPriceEl) {
+                avgPriceEl.textContent = formatMoney(parseFloat(bottomData.position_avg_price) || 0);
+            }
+
+            const priceEl = document.getElementById('btc-price');
+            if (priceEl) {
+                const currentPrice = parseFloat(priceEl.textContent.replace('$', '').replace(',', ''));
+                if (!isNaN(currentPrice)) {
+                    const floatEl = document.getElementById('bottom-float-profit');
+                    if (floatEl) {
+                        let floatProfit = 0;
+                        if ((bottomData.position_status || '').includes('做多')) {
+                            floatProfit = (currentPrice - (parseFloat(bottomData.position_avg_price) || 0)) * (bottomData.position_quantity || 0);
+                        } else if ((bottomData.position_status || '').includes('做空')) {
+                            floatProfit = ((parseFloat(bottomData.position_avg_price) || 0) - currentPrice) * (bottomData.position_quantity || 0);
+                        }
+                        floatEl.textContent = formatMoney(floatProfit);
+                        floatEl.className = 'text-md font-bold ' + (floatProfit >= 0 ? 'text-green-600' : 'text-red-600');
+                    }
+                }
+            }
+
+            renderTopBottomTable('bottom-tbody', records);
+        }
+
+        // 通用渲染: 周期 | 模式 | 仓位 | 均价 | 状态 | 平仓时间 | 盈亏
+        function renderTopBottomTable(tbodyId, records) {
+            const tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+            if (!records || records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-3 py-4 text-center text-gray-500"><i class="fa fa-info-circle text-lg mb-1"></i><p>暂无交易记录</p></td></tr>';
                 return;
             }
-
-            const sortedTradeRecords = [...tradeRecords].sort((a, b) => {
-                const timeA = a.timestamp ? new Date(a.timestamp.replace(/-/g, '/')) : 0;
-                const timeB = b.timestamp ? new Date(b.timestamp.replace(/-/g, '/')) : 0;
-                return timeB - timeA;
-            });
-
-            const displayTradeRecords = sortedTradeRecords.slice(0, MAX_DISPLAY_RECORDS);
-
             tbody.innerHTML = '';
-            displayTradeRecords.forEach(trade => {
-                const isDcaTrade = trade.source === 'spot_dca';
+            records.forEach(trade => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-50';
-                if (isDcaTrade) {
-                    const qty = parseFloat(trade.quantity) || 0;
-                    const isBuy = (trade.direction || '').includes('long') || (trade.mode || '').includes('买入') || (trade.mode || '').includes('开多');
-                    const quoteAmount = trade.quote_amount ? ('$' + formatMoney(parseFloat(trade.quote_amount) || 0)) : '';
-                    const remainingSlots = trade.remaining_dca_count !== undefined ? ('剩余' + trade.remaining_dca_count + '次') : '';
-                    tr.innerHTML = `
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.timestamp || '-'}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm">
-                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${isBuy ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                                ${trade.strategy_label || trade.mode || '-'}
-                            </span>
-                        </td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(qty)} ${trade.symbol || ''}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatMoney(parseFloat(trade.avg_price) || 0)}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm">
-                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${trade.is_closed ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
-                                ${trade.is_closed ? '已执行' : '待执行'}
-                            </span>
-                        </td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.close_timestamp || trade.next_due_time || '-'}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">${quoteAmount} <span class="text-xs text-gray-400">${remainingSlots}</span></td>
-                    `;
-                } else {
-                    tr.innerHTML = `
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.timestamp || '-'}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm">
-                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${(trade.mode === '摸顶做空' || trade.mode === '做空') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                                ${trade.mode || '-'}
-                            </span>
-                        </td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(trade.quantity || 0)} BTC</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatMoney(parseFloat(trade.avg_price) || 0)}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm">
-                            <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${trade.is_closed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                                ${trade.is_closed ? '已平仓' : '未平仓'}
-                            </span>
-                        </td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.close_timestamp || '-'}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium ${(parseFloat(trade.profit) >= 0) ? 'text-green-600' : 'text-red-600'}">${formatMoney(parseFloat(trade.profit) || 0)}</td>
-                    `;
-                }
+                const isShort = (trade.mode || '').includes('做空');
+                const isClosed = trade.is_closed;
+                const statusClass = isClosed ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
+                const statusText = isClosed ? '已平仓' : '未平仓';
+                const profitVal = parseFloat(trade.profit) || 0;
+                const profitClass = profitVal >= 0 ? 'text-green-600' : 'text-red-600';
+                tr.innerHTML = `
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.duration || '-'}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm">
+                        <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${isShort ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${trade.mode || '-'}</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatQuantity(trade.quantity || 0)} BTC</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${formatMoney(parseFloat(trade.avg_price) || 0)}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm">
+                        <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full ${statusClass}">${statusText}</span>
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">${trade.close_time || '-'}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium ${profitClass}">${formatMoney(profitVal)}</td>
+                `;
                 tbody.appendChild(tr);
             });
-        }
-        
-        function calculateFloatProfit(topBottomData, isDca) {
-            const priceElement = document.getElementById('btc-price');
-            if (!priceElement) return;
-            const priceText = priceElement.textContent;
-            const currentPrice = parseFloat(priceText.replace('$', '').replace(',', ''));
-            if (isNaN(currentPrice)) return;
-
-            const positionStatus = topBottomData.position_status || '';
-            const positionQuantity = isDca ?
-                (parseFloat(topBottomData.position_quantity) || 0) :
-                (topBottomData.position_quantity || 0);
-            const positionAvgPrice = parseFloat(topBottomData.position_avg_price) || 0;
-
-            let floatProfit = 0;
-
-            if (isDca) {
-                if (positionStatus.includes('做多')) {
-                    floatProfit = (currentPrice - positionAvgPrice) * positionQuantity;
-                } else if (positionStatus.includes('做空')) {
-                    floatProfit = (positionAvgPrice - currentPrice) * positionQuantity;
-                }
-            } else if (positionStatus === '摸顶做空' || positionStatus === '做空') {
-                floatProfit = (positionAvgPrice - currentPrice) * positionQuantity;
-            } else if (positionStatus === '抄底做多' || positionStatus === '做多') {
-                floatProfit = (currentPrice - positionAvgPrice) * positionQuantity;
-            }
-
-            const floatProfitElement = document.getElementById('top-bottom-float-profit');
-            if (floatProfitElement) {
-                floatProfitElement.textContent = formatMoney(floatProfit);
-                floatProfitElement.className = 'text-md font-bold';
-                if (floatProfit >= 0) {
-                    floatProfitElement.classList.add('text-green-600');
-                } else {
-                    floatProfitElement.classList.add('text-red-600');
-                }
-            }
         }
         
         // 更新当前时间
@@ -2668,14 +2968,14 @@
                     updateArbitrageSummary(data.arbitrage);
                     updateStrategyStatus(data);
                     updateMarketData(data);
-                    updateTopBottomData(data);
-                    updateTopBottomTable(data);
-                    updateTopSummary(data);
+                    updateTopData(data);
+                    updateBottomData(data);
                     updateProfitCurve(data);
                     updateYearlyProfitCurve(data);
                 })
                 .catch(error => console.error('获取数据失败:', error));
         };
+
     </script>
 </body>
 </html>

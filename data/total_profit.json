@@ -72,6 +72,21 @@
         "date": "2026-04", 
         "principal": 30651, 
         "total_funds": 45000
+      },
+      {
+        "date": "2026-05", 
+        "principal": 45444, 
+        "total_funds": 62350
+      },
+      {
+        "date": "2026-06", 
+        "principal": 45444, 
+        "total_funds": 75500
+      },
+      {
+        "date": "2026-07", 
+        "principal": 42486, 
+        "total_funds": 70400
       }
     ]
   }
