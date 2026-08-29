@@ -161,6 +161,18 @@
             border: 1px solid rgba(17, 17, 17, 0.08);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
         }
+        #market-cycle.bull {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(16, 185, 129, 0.26)) !important;
+            color: #166534 !important;
+            border-color: rgba(34, 197, 94, 0.38) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(34, 197, 94, 0.12);
+        }
+        #market-cycle.bear {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(220, 38, 38, 0.23)) !important;
+            color: #991b1b !important;
+            border-color: rgba(239, 68, 68, 0.38) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(239, 68, 68, 0.12);
+        }
         h1 {
             font-size: 1.48rem;
             font-weight: 600;
@@ -454,6 +466,87 @@
 
             .triangle-chip-row {
                 margin-top: 0.5rem;
+            }
+
+            #top-section,
+            #bottom-section {
+                display: flex !important;
+                flex-direction: column !important;
+                height: auto !important;
+                min-height: 0 !important;
+            }
+
+            #top-section > .mb-2,
+            #bottom-section > .mb-2 {
+                margin-bottom: 0.5rem !important;
+                flex-shrink: 0;
+            }
+
+            #top-section > .mb-2 > .flex,
+            #bottom-section > .mb-2 > .flex {
+                margin-bottom: 0.15rem !important;
+            }
+
+            #top-section .grid.grid-cols-1.md\:grid-cols-4,
+            #bottom-section .grid.grid-cols-1.md\:grid-cols-4,
+            #top-section .grid.grid-cols-1.md\:grid-cols-5,
+            #bottom-section .grid.grid-cols-1.md\:grid-cols-5 {
+                gap: 0.55rem !important;
+                margin-bottom: 0.6rem !important;
+                flex-shrink: 0;
+            }
+
+            #top-section .grid .bg-white,
+            #bottom-section .grid .bg-white {
+                padding: 0.8rem 0.9rem !important;
+            }
+
+            #top-section .grid .bg-white h4,
+            #bottom-section .grid .bg-white h4 {
+                font-size: 0.78rem !important;
+                margin-bottom: 0.2rem !important;
+            }
+
+            #top-section .grid .dashboard-stat-card,
+            #bottom-section .grid .dashboard-stat-card {
+                min-height: 3.3rem !important;
+                padding: 0.45rem 0.55rem !important;
+            }
+
+            #top-section .grid .dashboard-metric-label,
+            #bottom-section .grid .dashboard-metric-label {
+                font-size: 0.62rem !important;
+                margin-bottom: 0 !important;
+            }
+
+            #top-section .grid .dashboard-metric-value,
+            #bottom-section .grid .dashboard-metric-value {
+                font-size: 0.82rem !important;
+            }
+
+            #top-section > .record-card,
+            #bottom-section > .record-card {
+                flex: 1 1 auto !important;
+                min-height: 260px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+            }
+
+            #top-section > .record-card > h4,
+            #bottom-section > .record-card > h4 {
+                font-size: 0.9rem !important;
+                margin-bottom: 0.4rem !important;
+                flex-shrink: 0;
+            }
+
+            #top-section > .record-card > .table-container,
+            #bottom-section > .record-card > .table-container {
+                flex: 1 1 auto !important;
+                min-height: 180px !important;
+                height: auto !important;
+                max-height: 420px !important;
+                overflow-y: auto !important;
             }
         }
 
@@ -938,75 +1031,6 @@
             background: rgba(255,255,255,0.7) !important;
         }
 
-        /* 摸顶/抄底: flex column 布局, 数据区压缩, 表格区占 2/3 */
-        #top-section, #bottom-section {
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100% !important;
-        }
-        #top-section > .mb-2,
-        #bottom-section > .mb-2 {
-            margin-bottom: 0.2rem !important;
-            flex-shrink: 1;
-        }
-        #top-section > .mb-2 > .flex,
-        #bottom-section > .mb-2 > .flex {
-            margin-bottom: 0.15rem !important;
-        }
-        #top-section .grid.grid-cols-1.md\:grid-cols-4,
-        #bottom-section .grid.grid-cols-1.md\:grid-cols-4,
-        #top-section .grid.grid-cols-1.md\:grid-cols-5,
-        #bottom-section .grid.grid-cols-1.md\:grid-cols-5 {
-            gap: 0.2rem !important;
-            margin-bottom: 0.2rem !important;
-            flex-shrink: 1;
-        }
-        #top-section .grid .bg-white,
-        #bottom-section .grid .bg-white {
-            padding: 0.3rem 0.4rem !important;
-        }
-        #top-section .grid .bg-white h4,
-        #bottom-section .grid .bg-white h4 {
-            font-size: 0.65rem !important;
-            margin-bottom: 0.15rem !important;
-        }
-        #top-section .grid .dashboard-stat-card,
-        #bottom-section .grid .dashboard-stat-card {
-            min-height: 1.8rem !important;
-            padding: 0.2rem 0.3rem !important;
-        }
-        #top-section .grid .dashboard-metric-label,
-        #bottom-section .grid .dashboard-metric-label {
-            font-size: 0.5rem !important;
-            margin-bottom: 0 !important;
-        }
-        #top-section .grid .dashboard-metric-value,
-        #bottom-section .grid .dashboard-metric-value {
-            font-size: 0.7rem !important;
-        }
-        /* 表格区占剩余空间 2/3 */
-        #top-section > .record-card,
-        #bottom-section > .record-card {
-            flex: 2 1 0 !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-        }
-        #top-section > .record-card > h4,
-        #bottom-section > .record-card > h4 {
-            font-size: 0.8rem !important;
-            margin-bottom: 0.3rem !important;
-            flex-shrink: 1;
-        }
-        #top-section > .record-card > .table-container,
-        #bottom-section > .record-card > .table-container {
-            flex: 1 1 0 !important;
-            min-height: 0 !important;
-            height: auto !important;
-            max-height: none !important;
-            overflow-y: auto !important;
-        }
 
     </style>
 </head>
@@ -1021,7 +1045,7 @@
             <div class="flex items-center mb-3 md:mb-0">
                 <div class="flex items-center mr-6">
                     <span class="text-sm font-semibold text-gray-700 mr-2">比特币周期:</span>
-                    <span class="px-3 py-1 rounded-full text-sm font-semibold flex items-center" id="market-cycle">
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold flex items-center bear" id="market-cycle">
                         <i class="fa fa-arrow-down mr-1"></i> 熊
                     </span>
                 </div>
@@ -2538,11 +2562,11 @@
         
         const STATUS_COLORS = {
             '建仓': 'bg-blue-100 text-blue-800',
-            '持仓': 'bg-green-100 text-green-800',
+            '满仓': 'bg-green-100 text-green-800',
             '减仓': 'bg-orange-100 text-orange-800',
-            '清仓': 'bg-gray-100 text-gray-800'
+            '空仓': 'bg-gray-100 text-gray-800'
         };
-        const STATUS_LIST = ['建仓', '持仓', '减仓', '清仓'];
+        const STATUS_LIST = ['建仓', '满仓', '减仓', '空仓'];
 
         function getStatusClass(status) {
             return STATUS_COLORS[status] || 'bg-gray-100 text-gray-800';
@@ -2606,14 +2630,14 @@
             // 更新市场周期
             const cycleElement = document.getElementById('market-cycle');
             if (cycleElement) {
-                // 根据周期设置不同的图标和颜色
                 cycleElement.className = 'px-3 py-1 rounded-full text-sm font-semibold flex items-center';
+                cycleElement.classList.remove('bull', 'bear', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
                 if (marketData.cycle === '牛') {
                     cycleElement.innerHTML = '<i class="fa fa-arrow-up mr-1"></i> 牛';
-                    cycleElement.classList.add('bg-green-100', 'text-green-800');
+                    cycleElement.classList.add('bull');
                 } else if (marketData.cycle === '熊') {
                     cycleElement.innerHTML = '<i class="fa fa-arrow-down mr-1"></i> 熊';
-                    cycleElement.classList.add('bg-red-100', 'text-red-800');
+                    cycleElement.classList.add('bear');
                 }
             }
             
