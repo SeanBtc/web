@@ -25,6 +25,48 @@ data_dir = os.path.join(os.path.dirname(__file__), 'data')
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
+# AlphaEngine 只读状态文件：默认与 Web 位于同一项目根目录，也可由服务器环境变量覆盖。
+_alpha_engine_state_file = os.getenv('ALPHA_ENGINE_STATE_FILE', '').strip()
+if _alpha_engine_state_file:
+    alpha_engine_state_file = (
+        _alpha_engine_state_file
+        if os.path.isabs(_alpha_engine_state_file)
+        else os.path.abspath(os.path.join(os.path.dirname(__file__), _alpha_engine_state_file))
+    )
+else:
+    alpha_engine_state_file = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), '..', 'AlphaEngine', 'data', 'state.json'
+    ))
+
+ALPHA_ENGINE_REGIME_LABELS = {
+    'BEAR_BOTTOM': '熊底',
+    'RECOVERY': '牛初',
+    'BULL': '牛中',
+    'DEEP_BULL': '牛顶',
+    'BULL_COOLING': '转熊',
+    'BEAR': '熊中',
+    'BEAR_DEEP': '深熊',
+}
+
+
+def load_alpha_engine_regime():
+    """只读 AlphaEngine 的 regime.current，不修改其项目或状态文件。"""
+    try:
+        with open(alpha_engine_state_file, 'r', encoding='utf-8') as state_file:
+            state_data = json.load(state_file)
+        regime_data = state_data.get('regime', {}) if isinstance(state_data, dict) else {}
+        current = regime_data.get('current') if isinstance(regime_data, dict) else None
+        if current is None and isinstance(state_data, dict):
+            current = state_data.get('current')
+        current = str(current or '').strip().upper()
+        return current if current in ALPHA_ENGINE_REGIME_LABELS else ''
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return ''
+
+
+def alpha_engine_regime_label(regime):
+    return ALPHA_ENGINE_REGIME_LABELS.get(regime, '未知')
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 # 添加 CORS 支持
@@ -747,6 +789,7 @@ def check_file_updates():
     legacy_triangle_file_path = os.path.join(data_dir, 'triangle_trades.json')
     lead_file_path = os.path.join(data_dir, 'lead_trades.json')
     arbitrage_file_path = os.path.join(data_dir, 'arbitrage_trades.json')
+    last_modified_alpha_engine = 0
     last_modified_total_profit = 0
     last_modified_top = 0
     last_modified_bottom = 0
@@ -757,6 +800,26 @@ def check_file_updates():
     
     while True:
         try:
+            # 只读 AlphaEngine 状态，并在其状态变更后推送新的中文阶段
+            if os.path.exists(alpha_engine_state_file):
+                current_modified = os.path.getmtime(alpha_engine_state_file)
+                if current_modified > last_modified_alpha_engine:
+                    new_regime = load_alpha_engine_regime()
+                    if new_regime:
+                        last_modified_alpha_engine = current_modified
+                        new_cycle = alpha_engine_regime_label(new_regime)
+                        if (data_storage.market_data.get('alpha_engine_regime') != new_regime
+                                or data_storage.market_data.get('cycle') != new_cycle):
+                            data_storage.update_market_data({
+                                'cycle': new_cycle,
+                                'alpha_engine_regime': new_regime,
+                            })
+                            socketio.emit('market_update', {
+                                'market_data': data_storage.market_data,
+                                'strategy_status': data_storage.strategy_status,
+                            })
+                            print(f'AlphaEngine 市场阶段已更新: {new_regime} -> {new_cycle}')
+
             # 检查总盈亏数据文件
             if os.path.exists(total_profit_file_path):
                 current_modified = os.path.getmtime(total_profit_file_path)
@@ -898,6 +961,9 @@ triangle_summary = triangle_data.get('summary', {
     'total_profit_all': 0.0,
     'initial_funds': 1000.0
 })
+
+alpha_engine_regime = load_alpha_engine_regime()
+alpha_engine_cycle = alpha_engine_regime_label(alpha_engine_regime)
 
 # 定期获取 BTC 价格（DataFeed 优先 → Binance API → CoinGecko 回退）
 def fetch_btc_price():
@@ -1046,7 +1112,8 @@ global_data = {
         'bottom': bottom_file_data.get('status', '清仓'),
     },
     'market_data': {
-        'cycle': '牛',
+        'cycle': alpha_engine_cycle,
+        'alpha_engine_regime': alpha_engine_regime,
         'btc_price': 58000.0
     }
 }
@@ -1476,6 +1543,8 @@ class DataStorage:
     def update_market_data(self, data):
         if 'cycle' in data:
             self.market_data['cycle'] = data['cycle']
+        if 'alpha_engine_regime' in data:
+            self.market_data['alpha_engine_regime'] = data['alpha_engine_regime']
         if 'btc_price' in data:
             self.market_data['btc_price'] = data['btc_price']
         self.update_global_data()

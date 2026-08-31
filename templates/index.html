@@ -173,6 +173,48 @@
             border-color: rgba(239, 68, 68, 0.38) !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(239, 68, 68, 0.12);
         }
+        #market-cycle.cycle-bear-bottom {
+            background: linear-gradient(135deg, rgba(100, 116, 139, 0.18), rgba(71, 85, 105, 0.24)) !important;
+            color: #334155 !important;
+            border-color: rgba(71, 85, 105, 0.38) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(71, 85, 105, 0.12);
+        }
+        #market-cycle.cycle-recovery {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.18), rgba(13, 148, 136, 0.24)) !important;
+            color: #0f766e !important;
+            border-color: rgba(13, 148, 136, 0.38) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(13, 148, 136, 0.12);
+        }
+        #market-cycle.cycle-bull {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(22, 163, 74, 0.24)) !important;
+            color: #166534 !important;
+            border-color: rgba(22, 163, 74, 0.38) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(22, 163, 74, 0.12);
+        }
+        #market-cycle.cycle-deep-bull {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.28)) !important;
+            color: #92400e !important;
+            border-color: rgba(245, 158, 11, 0.42) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(245, 158, 11, 0.14);
+        }
+        #market-cycle.cycle-bull-cooling {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(234, 88, 12, 0.28)) !important;
+            color: #9a3412 !important;
+            border-color: rgba(234, 88, 12, 0.42) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(234, 88, 12, 0.14);
+        }
+        #market-cycle.cycle-bear {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.28)) !important;
+            color: #991b1b !important;
+            border-color: rgba(185, 28, 28, 0.42) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(185, 28, 28, 0.14);
+        }
+        #market-cycle.cycle-bear-deep {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(109, 40, 217, 0.28)) !important;
+            color: #5b21b6 !important;
+            border-color: rgba(109, 40, 217, 0.42) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(109, 40, 217, 0.14);
+        }
         h1 {
             font-size: 1.48rem;
             font-weight: 600;
@@ -491,14 +533,14 @@
             #bottom-section .grid.grid-cols-1.md\:grid-cols-4,
             #top-section .grid.grid-cols-1.md\:grid-cols-5,
             #bottom-section .grid.grid-cols-1.md\:grid-cols-5 {
-                gap: 0.55rem !important;
-                margin-bottom: 0.6rem !important;
+                gap: 0.45rem !important;
+                margin-bottom: 0.45rem !important;
                 flex-shrink: 0;
             }
 
             #top-section .grid .bg-white,
             #bottom-section .grid .bg-white {
-                padding: 0.8rem 0.9rem !important;
+                padding: 0.42rem 0.58rem !important;
             }
 
             #top-section .grid .bg-white h4,
@@ -509,8 +551,8 @@
 
             #top-section .grid .dashboard-stat-card,
             #bottom-section .grid .dashboard-stat-card {
-                min-height: 3.3rem !important;
-                padding: 0.45rem 0.55rem !important;
+                min-height: 1.8rem !important;
+                padding: 0.28rem 0.45rem !important;
             }
 
             #top-section .grid .dashboard-metric-label,
@@ -994,6 +1036,26 @@
             }
         }
 
+        /* 摸顶/抄底：将汇总区域释放的空间交给交易记录 */
+        #top-section .grid.grid-cols-1.md\:grid-cols-4,
+        #bottom-section .grid.grid-cols-1.md\:grid-cols-4,
+        #top-section .grid.grid-cols-1.md\:grid-cols-5,
+        #bottom-section .grid.grid-cols-1.md\:grid-cols-5 {
+            gap: 0.45rem !important;
+            margin-bottom: 0.45rem !important;
+        }
+
+        #top-section .grid .bg-white,
+        #bottom-section .grid .bg-white {
+            padding: 0.42rem 0.58rem !important;
+        }
+
+        #top-section .grid .dashboard-stat-card,
+        #bottom-section .grid .dashboard-stat-card {
+            min-height: 1.8rem !important;
+            padding: 0.28rem 0.45rem !important;
+        }
+
         /* ========== 渐变背景 ========== */
         #lead-section {
             background: linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(59,130,246,0.06) 100%) !important;
@@ -1045,8 +1107,8 @@
             <div class="flex items-center mb-3 md:mb-0">
                 <div class="flex items-center mr-6">
                     <span class="text-sm font-semibold text-gray-700 mr-2">比特币周期:</span>
-                    <span class="px-3 py-1 rounded-full text-sm font-semibold flex items-center bear" id="market-cycle">
-                        <i class="fa fa-arrow-down mr-1"></i> 熊
+                    <span class="px-3 py-1 rounded-full text-sm font-semibold flex items-center" id="market-cycle">
+                        <i class="fa fa-question-circle mr-1"></i> 未知
                     </span>
                 </div>
                 <div class="flex items-center">
@@ -1643,6 +1705,9 @@
         let yearlyProfitCurveChart = null;
         let _lastProfitFingerprint = '';
         let _lastYearlyFingerprint = '';
+        let currentBtcPrice = null;
+        let latestTopPositionData = {};
+        let latestBottomPositionData = {};
         const MAX_DISPLAY_RECORDS = 100;
         const APPLE_CHART_THEME = {
             fontFamily: '"SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
@@ -2631,23 +2696,95 @@
             const cycleElement = document.getElementById('market-cycle');
             if (cycleElement) {
                 cycleElement.className = 'px-3 py-1 rounded-full text-sm font-semibold flex items-center';
-                cycleElement.classList.remove('bull', 'bear', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-                if (marketData.cycle === '牛') {
-                    cycleElement.innerHTML = '<i class="fa fa-arrow-up mr-1"></i> 牛';
-                    cycleElement.classList.add('bull');
-                } else if (marketData.cycle === '熊') {
-                    cycleElement.innerHTML = '<i class="fa fa-arrow-down mr-1"></i> 熊';
-                    cycleElement.classList.add('bear');
+                cycleElement.classList.remove(
+                    'bull', 'bear', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800',
+                    'cycle-bear-bottom', 'cycle-recovery', 'cycle-bull', 'cycle-deep-bull',
+                    'cycle-bull-cooling', 'cycle-bear', 'cycle-bear-deep'
+                );
+                const cycleLabel = String(marketData.cycle || '未知');
+                const regimeClassMap = {
+                    'BEAR_BOTTOM': 'cycle-bear-bottom',
+                    'RECOVERY': 'cycle-recovery',
+                    'BULL': 'cycle-bull',
+                    'DEEP_BULL': 'cycle-deep-bull',
+                    'BULL_COOLING': 'cycle-bull-cooling',
+                    'BEAR': 'cycle-bear',
+                    'BEAR_DEEP': 'cycle-bear-deep'
+                };
+                const regimeClass = regimeClassMap[String(marketData.alpha_engine_regime || '').toUpperCase()];
+                if (regimeClass) {
+                    cycleElement.classList.add(regimeClass);
+                }
+                if (cycleLabel.startsWith('牛')) {
+                    cycleElement.innerHTML = `<i class="fa fa-arrow-up mr-1"></i> ${cycleLabel}`;
+                } else if (cycleLabel.startsWith('熊') || cycleLabel === '转熊') {
+                    cycleElement.innerHTML = `<i class="fa fa-arrow-down mr-1"></i> ${cycleLabel}`;
+                } else {
+                    cycleElement.innerHTML = `<i class="fa fa-question-circle mr-1"></i> ${cycleLabel}`;
                 }
             }
             
             // 更新 BTC 价格
-            if (marketData.btc_price) {
+            const nextBtcPrice = Number(marketData.btc_price);
+            if (Number.isFinite(nextBtcPrice) && nextBtcPrice > 0) {
+                currentBtcPrice = nextBtcPrice;
                 const priceElement = document.getElementById('btc-price');
                 if (priceElement) {
-                    priceElement.textContent = formatMoney(parseFloat(marketData.btc_price));
+                    priceElement.textContent = formatMoney(currentBtcPrice);
                 }
             }
+
+            // 轻量行情更新也要同步刷新两个策略的浮盈
+            refreshTopBottomFloatingProfits();
+        }
+
+        function getCurrentBtcPrice() {
+            if (Number.isFinite(currentBtcPrice) && currentBtcPrice > 0) {
+                return currentBtcPrice;
+            }
+
+            const priceElement = document.getElementById('btc-price');
+            if (!priceElement) return null;
+            const displayedPrice = Number(priceElement.textContent.replace(/[^0-9.-]+/g, ''));
+            return Number.isFinite(displayedPrice) && displayedPrice > 0 ? displayedPrice : null;
+        }
+
+        function calculateFloatingProfit(positionData, defaultDirection = '') {
+            const currentPrice = getCurrentBtcPrice();
+            const quantity = Number(positionData?.position_quantity);
+            const averagePrice = Number(positionData?.position_avg_price);
+            const positionStatus = String(positionData?.position_status || positionData?.status || '');
+
+            if (!Number.isFinite(currentPrice) || !Number.isFinite(quantity) || !Number.isFinite(averagePrice)) {
+                return null;
+            }
+            if (positionStatus.includes('做空') || defaultDirection === 'short') {
+                return (averagePrice - currentPrice) * quantity;
+            }
+            if (positionStatus.includes('做多') || positionStatus.includes('现货') || defaultDirection === 'long') {
+                return (currentPrice - averagePrice) * quantity;
+            }
+            return 0;
+        }
+
+        function updateFloatingProfit(elementId, positionData, defaultDirection = '') {
+            const floatElement = document.getElementById(elementId);
+            if (!floatElement) return;
+
+            const floatingProfit = calculateFloatingProfit(positionData, defaultDirection);
+            if (floatingProfit === null) {
+                floatElement.textContent = '-';
+                floatElement.className = 'text-md font-bold text-gray-500';
+                return;
+            }
+
+            floatElement.textContent = formatMoney(floatingProfit);
+            floatElement.className = 'text-md font-bold ' + (floatingProfit >= 0 ? 'text-green-600' : 'text-red-600');
+        }
+
+        function refreshTopBottomFloatingProfits() {
+            updateFloatingProfit('top-float-profit', latestTopPositionData, 'short');
+            updateFloatingProfit('bottom-float-profit', latestBottomPositionData, 'long');
         }
         
 
@@ -2656,6 +2793,7 @@
         function updateTopData(data) {
             const topData = data.top || {};
             const records = topData.trade_records || [];
+            latestTopPositionData = topData;
 
             // 更新状态徽章
             const topStatusEl = document.getElementById('top-status');
@@ -2682,24 +2820,8 @@
                 avgPriceEl.textContent = formatMoney(parseFloat(topData.position_avg_price) || 0);
             }
 
-            // 浮盈
-            const priceEl = document.getElementById('btc-price');
-            if (priceEl) {
-                const currentPrice = parseFloat(priceEl.textContent.replace('$', '').replace(',', ''));
-                if (!isNaN(currentPrice)) {
-                    const floatEl = document.getElementById('top-float-profit');
-                    if (floatEl) {
-                        let floatProfit = 0;
-                        if ((topData.position_status || '').includes('做空')) {
-                            floatProfit = (parseFloat(topData.position_avg_price) || 0 - currentPrice) * (topData.position_quantity || 0);
-                        } else if ((topData.position_status || '').includes('做多')) {
-                            floatProfit = (currentPrice - (parseFloat(topData.position_avg_price) || 0)) * (topData.position_quantity || 0);
-                        }
-                        floatEl.textContent = formatMoney(floatProfit);
-                        floatEl.className = 'text-md font-bold ' + (floatProfit >= 0 ? 'text-green-600' : 'text-red-600');
-                    }
-                }
-            }
+            // 浮盈 = 当前 BTC 价格与持仓均价的价差 × 持仓数量
+            updateFloatingProfit('top-float-profit', topData, 'short');
 
             // 渲染表格
             renderTopBottomTable('top-tbody', records);
@@ -2709,6 +2831,7 @@
         function updateBottomData(data) {
             const bottomData = data.bottom || {};
             const records = bottomData.trade_records || [];
+            latestBottomPositionData = bottomData;
 
             // 更新状态徽章
             const bottomStatusEl = document.getElementById('bottom-status');
@@ -2732,23 +2855,8 @@
                 avgPriceEl.textContent = formatMoney(parseFloat(bottomData.position_avg_price) || 0);
             }
 
-            const priceEl = document.getElementById('btc-price');
-            if (priceEl) {
-                const currentPrice = parseFloat(priceEl.textContent.replace('$', '').replace(',', ''));
-                if (!isNaN(currentPrice)) {
-                    const floatEl = document.getElementById('bottom-float-profit');
-                    if (floatEl) {
-                        let floatProfit = 0;
-                        if ((bottomData.position_status || '').includes('做多')) {
-                            floatProfit = (currentPrice - (parseFloat(bottomData.position_avg_price) || 0)) * (bottomData.position_quantity || 0);
-                        } else if ((bottomData.position_status || '').includes('做空')) {
-                            floatProfit = ((parseFloat(bottomData.position_avg_price) || 0) - currentPrice) * (bottomData.position_quantity || 0);
-                        }
-                        floatEl.textContent = formatMoney(floatProfit);
-                        floatEl.className = 'text-md font-bold ' + (floatProfit >= 0 ? 'text-green-600' : 'text-red-600');
-                    }
-                }
-            }
+            // 浮盈 = 当前 BTC 价格与持仓均价的价差 × 持仓数量
+            updateFloatingProfit('bottom-float-profit', bottomData, 'long');
 
             renderTopBottomTable('bottom-tbody', records);
         }
