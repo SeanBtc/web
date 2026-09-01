@@ -1,8 +1,19 @@
 {
-  "position_status": "抄底做多",
+  "position_status": "现货",
   "position_quantity": 0.0,
   "position_avg_price": 0.0,
   "position_symbol": "BTCUSDT",
-  "status": "清仓",
-  "trade_records": []
+  "status": "建仓",
+  "trade_records": [
+    {
+      "id": 1,
+      "duration": "2026至2029",
+      "mode": "现货",
+      "quantity": 0.1,
+      "avg_price": 78800.0,
+      "is_closed": false,
+      "close_time": "-",
+      "profit": 0.0
+    }
+  ]
 }

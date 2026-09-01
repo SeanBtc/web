@@ -1064,7 +1064,7 @@
             }
 
             .post-feed-item .post-feed-meta {
-                font-size: 0.66rem;
+                font-size: 0.7rem;
                 color: #6b7280;
                 margin-bottom: 0.25rem;
             }
@@ -1073,7 +1073,7 @@
                 display: inline-block;
                 padding: 0.08rem 0.4rem;
                 border-radius: 9999px;
-                font-size: 0.62rem;
+                font-size: 0.66rem;
                 font-weight: 600;
                 margin-right: 0.35rem;
             }
@@ -1094,7 +1094,7 @@
             }
 
             .post-feed-item .post-feed-content {
-                font-size: 0.72rem;
+                font-size: 0.78rem;
                 color: #374151;
                 line-height: 1.45;
             }
@@ -1286,32 +1286,18 @@
             background: rgba(255, 255, 255, 0.88);
         }
 
-        .post-feed-panel-header {
+.post-feed-panel-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
+            justify-content: flex-end;
             flex-shrink: 0;
-            padding: 0.9rem 1.05rem 0.72rem;
-            border-bottom: 1px solid rgba(17, 17, 17, 0.06);
+            padding: 0.35rem 0.2rem 0.3rem;
         }
 
-        .post-feed-panel-title {
+.post-feed-count {
             margin: 0;
-            color: var(--text-primary);
-            font-size: 0.92rem;
-            font-weight: 650;
-        }
-
-        .post-feed-panel-subtitle,
-        .post-feed-count {
-            margin: 0.18rem 0 0;
             color: var(--text-secondary);
             font-size: 0.68rem;
-        }
-
-        .post-feed-count {
-            margin: 0;
             white-space: nowrap;
         }
 
@@ -1348,7 +1334,7 @@
             gap: 0.62rem;
         }
 
-        .post-feed-avatar {
+.post-feed-avatar {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1356,10 +1342,15 @@
             width: 2.15rem;
             height: 2.15rem;
             border-radius: 9999px;
-            color: #ffffff;
-            background: linear-gradient(135deg, #111827, #0071e3);
-            font-size: 0.9rem;
-            font-weight: 700;
+            overflow: hidden;
+            background: #111827;
+        }
+
+        .post-feed-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .post-feed-author-block {
@@ -1375,9 +1366,9 @@
             line-height: 1.1rem;
         }
 
-        .post-feed-author-name {
+.post-feed-author-name {
             color: var(--text-primary);
-            font-size: 0.78rem;
+            font-size: 0.84rem;
             font-weight: 700;
         }
 
@@ -1393,10 +1384,10 @@
             font-size: 0.52rem;
         }
 
-        .post-feed-handle,
+.post-feed-handle,
         .post-feed-time {
             color: var(--text-secondary);
-            font-size: 0.68rem;
+            font-size: 0.73rem;
         }
 
         .post-feed-tag-row {
@@ -1407,12 +1398,12 @@
             margin-top: 0.18rem;
         }
 
-        .post-feed-type {
+.post-feed-type {
             display: inline-flex;
             align-items: center;
             padding: 0.12rem 0.42rem;
             border-radius: 9999px;
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             font-weight: 650;
         }
 
@@ -1585,12 +1576,8 @@
                 <div class="performance-viewer" id="performance-viewer">
                     <div class="performance-view-track" id="performance-view-track">
                         <div id="performance-post-view" class="performance-view performance-post-view" role="tabpanel">
-                            <div class="post-feed-panel">
+<div class="post-feed-panel">
                                 <div class="post-feed-panel-header">
-                                    <div>
-                                        <h3 class="post-feed-panel-title">策略发帖动态</h3>
-                                        <p class="post-feed-panel-subtitle">最新策略观察与实盘跟踪</p>
-                                    </div>
                                     <span class="post-feed-count" id="post-feed-count"></span>
                                 </div>
                                 <div class="post-feed-scroll" id="post-feed-container">
@@ -3711,7 +3698,7 @@ function sortPostsNewestFirst(posts) {
             return `
                 <article class="post-feed-item">
                     <div class="post-feed-author-row">
-                        <div class="post-feed-avatar" aria-hidden="true">B</div>
+                        <div class="post-feed-avatar" aria-hidden="true"><img src="/static/myicon.png" alt="" class="post-feed-avatar-img"></div>
                         <div class="post-feed-author-block">
                             <div class="post-feed-author-line">
                                 <span class="post-feed-author-name">${escapeHtml(author)}</span>
