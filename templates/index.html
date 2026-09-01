@@ -483,13 +483,23 @@
                 width: 100%;
             }
 
+            #performance-switcher-section {
+                min-height: 58rem;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .performance-switcher-shell {
+                flex: 1 1 auto;
+                height: auto;
+            }
+
             .panel-section {
                 margin-bottom: 0 !important;
             }
 
             #summary-section { order: 1; }
-            #total-curve-section { order: 2; }
-            #yearly-curve-section { order: 3; }
+            #performance-switcher-section { order: 2; }
             #triangle-section { order: 4; display: none; }
             #lead-section { order: 5; }
             #top-section { order: 6; }
@@ -728,6 +738,14 @@
                 grid-column: 2;
                 grid-row: 1;
                 overflow: visible;
+            }
+
+            #performance-switcher-section {
+                grid-column: 2;
+                grid-row: 1 / 4;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
             }
 
             #total-curve-section {
@@ -1010,6 +1028,77 @@
                 display: none;
             }
 
+            #post-feed-section .panel-shell {
+                height: 100%;
+                display: grid;
+                grid-template-rows: auto minmax(0, 1fr);
+                overflow: hidden;
+            }
+
+            #post-feed-section .bg-gray-50 {
+                height: 100%;
+                display: grid;
+                grid-template-rows: minmax(0, 1fr) auto;
+            }
+
+            .post-feed-scroll {
+                overflow-y: auto;
+                height: 100%;
+                max-height: 34rem;
+                padding-right: 0.25rem;
+            }
+
+            .post-feed-item {
+                padding: 0.6rem 0.8rem;
+                border-left: 3px solid #d1d5db;
+                margin-bottom: 0.5rem;
+                background: #ffffff;
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+                word-break: break-word;
+                white-space: pre-wrap;
+            }
+
+            .post-feed-item.is-new {
+                border-left-color: #22c55e;
+            }
+
+            .post-feed-item .post-feed-meta {
+                font-size: 0.66rem;
+                color: #6b7280;
+                margin-bottom: 0.25rem;
+            }
+
+            .post-feed-item .post-feed-type {
+                display: inline-block;
+                padding: 0.08rem 0.4rem;
+                border-radius: 9999px;
+                font-size: 0.62rem;
+                font-weight: 600;
+                margin-right: 0.35rem;
+            }
+
+            .post-feed-item .post-feed-type.ai {
+                background: #ede9fe;
+                color: #6d28d9;
+            }
+
+            .post-feed-item .post-feed-type.trade {
+                background: #dcfce7;
+                color: #15803d;
+            }
+
+            .post-feed-item .post-feed-type.switch {
+                background: #fef3c7;
+                color: #b45309;
+            }
+
+            .post-feed-item .post-feed-content {
+                font-size: 0.72rem;
+                color: #374151;
+                line-height: 1.45;
+            }
+
             #report-section .panel-shell {
                 padding-top: 0.38rem !important;
                 padding-bottom: 0.38rem !important;
@@ -1054,6 +1143,355 @@
         #bottom-section .grid .dashboard-stat-card {
             min-height: 1.8rem !important;
             padding: 0.28rem 0.45rem !important;
+        }
+
+        /* 中央视图切换容器 */
+        #performance-switcher-section {
+            min-height: 0;
+            padding: 0.72rem;
+            overflow: hidden;
+            border: 1px solid rgba(0, 113, 227, 0.12);
+            border-radius: 1rem;
+            background: linear-gradient(135deg, rgba(0, 113, 227, 0.07), rgba(255, 255, 255, 0.78));
+            box-shadow: var(--panel-shadow);
+        }
+
+        .performance-switcher-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .performance-switcher-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-shrink: 0;
+            padding: 0.35rem 0.35rem 0.72rem;
+        }
+
+        .performance-switcher-eyebrow {
+            display: block;
+            margin-bottom: 0.12rem;
+            color: var(--accent-blue);
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+        }
+
+        .performance-switcher-title {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.02rem;
+            font-weight: 650;
+            letter-spacing: -0.025em;
+        }
+
+        .performance-view-toggle {
+            display: inline-flex;
+            gap: 0.16rem;
+            padding: 0.18rem;
+            border: 1px solid rgba(17, 17, 17, 0.08);
+            border-radius: 9999px;
+            background: rgba(245, 245, 247, 0.76);
+        }
+
+        .performance-view-button {
+            border: 0;
+            border-radius: 9999px;
+            padding: 0.38rem 0.78rem;
+            color: var(--text-secondary);
+            background: transparent;
+            font: inherit;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+        }
+
+        .performance-view-button:hover {
+            color: var(--text-primary);
+        }
+
+        .performance-view-button.is-active {
+            color: var(--accent-blue);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .performance-viewer {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            border-radius: 0.85rem;
+        }
+
+        .performance-view-track {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            transition: transform 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+            will-change: transform;
+        }
+
+        .performance-view-track.is-pnl {
+            transform: translateX(-50%);
+        }
+
+        .performance-view {
+            flex: 0 0 50%;
+            min-width: 0;
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .performance-pnl-view {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+            gap: 0.72rem;
+        }
+
+        .performance-pnl-view > .panel-section {
+            min-height: 0;
+            margin: 0 !important;
+            overflow: hidden;
+        }
+
+        .performance-pnl-view > #total-curve-section,
+        .performance-pnl-view > #yearly-curve-section {
+            min-height: 0;
+        }
+
+        .performance-pnl-view > #total-curve-section .panel-shell,
+        .performance-pnl-view > #yearly-curve-section .panel-shell {
+            height: 100%;
+        }
+
+        .performance-post-view {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .post-feed-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+            border: 1px solid rgba(17, 17, 17, 0.06);
+            border-radius: 0.85rem;
+            background: rgba(255, 255, 255, 0.88);
+        }
+
+        .post-feed-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-shrink: 0;
+            padding: 0.9rem 1.05rem 0.72rem;
+            border-bottom: 1px solid rgba(17, 17, 17, 0.06);
+        }
+
+        .post-feed-panel-title {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            font-weight: 650;
+        }
+
+        .post-feed-panel-subtitle,
+        .post-feed-count {
+            margin: 0.18rem 0 0;
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+        }
+
+        .post-feed-count {
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .post-feed-scroll {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            max-height: none;
+            padding-right: 0;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 113, 227, 0.36) transparent;
+        }
+
+        .post-feed-item {
+            padding: 0.95rem 1.05rem 0.88rem;
+            border: 0;
+            border-bottom: 1px solid rgba(17, 17, 17, 0.07);
+            margin: 0;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 0;
+            box-shadow: none;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        .post-feed-item:hover {
+            background: rgba(0, 113, 227, 0.025);
+        }
+
+        .post-feed-author-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.62rem;
+        }
+
+        .post-feed-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 2.15rem;
+            width: 2.15rem;
+            height: 2.15rem;
+            border-radius: 9999px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #111827, #0071e3);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .post-feed-author-block {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .post-feed-author-line {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.28rem;
+            line-height: 1.1rem;
+        }
+
+        .post-feed-author-name {
+            color: var(--text-primary);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .post-feed-verified {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 0.85rem;
+            height: 0.85rem;
+            border-radius: 9999px;
+            color: #ffffff;
+            background: #0071e3;
+            font-size: 0.52rem;
+        }
+
+        .post-feed-handle,
+        .post-feed-time {
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+        }
+
+        .post-feed-tag-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.18rem;
+        }
+
+        .post-feed-type {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.12rem 0.42rem;
+            border-radius: 9999px;
+            font-size: 0.6rem;
+            font-weight: 650;
+        }
+
+        .post-feed-type.ai {
+            color: #5b21b6;
+            background: #ede9fe;
+        }
+
+        .post-feed-type.trade {
+            color: #166534;
+            background: #dcfce7;
+        }
+
+        .post-feed-type.switch {
+            color: #92400e;
+            background: #fef3c7;
+        }
+
+        .post-feed-type.hot {
+            color: #1d4ed8;
+            background: #dbeafe;
+        }
+
+        .post-feed-tag {
+            color: var(--text-secondary);
+            font-size: 0.62rem;
+        }
+
+        .post-feed-content {
+            margin: 0.68rem 0 0;
+            color: #1f2937;
+            font-size: 0.78rem;
+            line-height: 1.58;
+            white-space: pre-wrap;
+        }
+
+        .post-feed-item .post-feed-content {
+            color: #1f2937;
+            font-size: 0.78rem;
+            line-height: 1.58;
+        }
+
+        .post-feed-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin-top: 0.72rem;
+            color: #9ca3af;
+            font-size: 0.65rem;
+        }
+
+        .post-feed-actions span,
+        .post-feed-actions a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.28rem;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .post-feed-actions a:hover {
+            color: var(--accent-blue);
+        }
+
+        .post-feed-loader {
+            flex-shrink: 0;
+            padding: 0.58rem;
+            color: var(--text-secondary);
+            background: rgba(245, 245, 247, 0.72);
+            font-size: 0.66rem;
+            text-align: center;
+        }
+
+        .post-feed-loader.is-loading {
+            color: var(--accent-blue);
+        }
+
+        .post-feed-loader.is-done {
+            color: #9ca3af;
         }
 
         /* ========== 渐变背景 ========== */
@@ -1126,6 +1564,43 @@
     </header>
 
     <main id="dashboard-main" class="container mx-auto px-4 md:px-5 py-5 md:py-6">
+        <!-- 中央视图：帖子动态 / 盈亏面板 -->
+        <section id="performance-switcher-section" class="mb-12 panel-section">
+            <div class="performance-switcher-shell">
+                <div class="performance-switcher-header">
+                    <div>
+                        <span class="performance-switcher-eyebrow">B STRATEGY</span>
+                        <h2 class="performance-switcher-title" id="performance-view-title">策略发帖动态</h2>
+                    </div>
+                    <div class="performance-view-toggle" role="tablist" aria-label="中央面板视图切换">
+                        <button type="button" class="performance-view-button is-active" data-performance-view="posts" role="tab" aria-selected="true">
+                            <i class="fa fa-comments-o mr-1"></i>帖子
+                        </button>
+                        <button type="button" class="performance-view-button" data-performance-view="pnl" role="tab" aria-selected="false">
+                            <i class="fa fa-line-chart mr-1"></i>盈亏
+                        </button>
+                    </div>
+                </div>
+
+                <div class="performance-viewer" id="performance-viewer">
+                    <div class="performance-view-track" id="performance-view-track">
+                        <div id="performance-post-view" class="performance-view performance-post-view" role="tabpanel">
+                            <div class="post-feed-panel">
+                                <div class="post-feed-panel-header">
+                                    <div>
+                                        <h3 class="post-feed-panel-title">策略发帖动态</h3>
+                                        <p class="post-feed-panel-subtitle">最新策略观察与实盘跟踪</p>
+                                    </div>
+                                    <span class="post-feed-count" id="post-feed-count"></span>
+                                </div>
+                                <div class="post-feed-scroll" id="post-feed-container">
+                                    <p class="text-gray-500 text-center py-8" id="post-feed-empty">暂无发帖记录</p>
+                                </div>
+                                <div class="post-feed-loader" id="post-feed-loader" aria-live="polite">继续下滑加载更早动态</div>
+                            </div>
+                        </div>
+
+                        <div id="performance-pnl-view" class="performance-view performance-pnl-view" role="tabpanel" aria-hidden="true">
         <!-- 策略盈亏摘要 -->
         <section id="summary-section" class="mb-12 panel-section">
             <div class="bg-white rounded-xl shadow-md p-6 panel-shell">
@@ -1165,6 +1640,7 @@
             </div>
         </section>
 
+        <!-- 本年年度曲线 -->
         <section id="yearly-curve-section" class="mb-12 panel-section">
             <div class="bg-white rounded-xl shadow-md p-6 panel-shell">
                 <h3 class="text-xl font-semibold text-dark mb-4">本年年度曲线</h3>
@@ -1174,6 +1650,12 @@
                     </div>
                     <div class="mt-2 text-sm text-gray-600">
                         <p><strong>本年收益</strong>：当本年份的收益情况</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2135,6 +2617,14 @@
             // 更新盈利曲线
             updateProfitCurve(data);
             updateYearlyProfitCurve(data);
+
+            // 更新发帖动态
+            updatePostFeed(data);
+        });
+
+        // 发帖动态更新 — 新帖子到达时滚动刷新
+        socket.on('post_feed_update', function(data) {
+            updatePostFeed(data);
         });
 
         // 轻量市场数据更新 — 只更新价格和周期，不刷新图表
@@ -3104,9 +3594,233 @@
                     updateBottomData(data);
                     updateProfitCurve(data);
                     updateYearlyProfitCurve(data);
+                    updatePostFeed(data);
                 })
                 .catch(error => console.error('获取数据失败:', error));
         };
+
+        // ===== 中央视图切换 =====
+        const performanceViewTrack = document.getElementById('performance-view-track');
+        const performanceViewTitle = document.getElementById('performance-view-title');
+        const performanceViewButtons = document.querySelectorAll('[data-performance-view]');
+
+        function setPerformanceView(view) {
+            const isPnlView = view === 'pnl';
+            if (performanceViewTrack) {
+                performanceViewTrack.classList.toggle('is-pnl', isPnlView);
+            }
+            performanceViewButtons.forEach(button => {
+                const active = button.dataset.performanceView === view;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-selected', String(active));
+            });
+            if (performanceViewTitle) {
+                performanceViewTitle.textContent = isPnlView ? '交易系统盈亏' : '策略发帖动态';
+            }
+            document.getElementById('performance-post-view')?.setAttribute('aria-hidden', String(isPnlView));
+            document.getElementById('performance-pnl-view')?.setAttribute('aria-hidden', String(!isPnlView));
+            if (isPnlView) {
+                window.setTimeout(() => {
+                    profitCurveChart?.resize();
+                    yearlyProfitCurveChart?.resize();
+                }, 380);
+            }
+        }
+
+        performanceViewButtons.forEach(button => {
+            button.addEventListener('click', () => setPerformanceView(button.dataset.performanceView));
+        });
+
+        // ===== 发帖动态模块 =====
+        const POST_PAGE_SIZE = 20;
+        const postFeedState = {
+            posts: [],
+            total: 0,
+            hasMore: false,
+            before: '',
+            loading: false,
+            initialized: false
+        };
+
+        function postTypeClass(postType) {
+            const type = String(postType || '').toLowerCase();
+            if (type === 'ai_regime_update' || type === 'alphaengine') return 'ai';
+            if (type === 'regime_switch' || type === 'cycle_summary') return 'switch';
+            if (type === 'hot_content') return 'hot';
+            return 'trade';
+        }
+
+        function formatPostTime(timestamp) {
+            if (!timestamp) return '';
+            const text = String(timestamp).trim()
+                .replace('T', ' ')
+                .replace('Z', '')
+                .replace('+00:00', '');
+            return text.slice(0, 16);
+        }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function postKey(post) {
+            return String(post.post_id || `${post.timestamp || ''}|${post.label || ''}|${post.post_type || ''}|${post.content || ''}`);
+        }
+
+function sortPostsNewestFirst(posts) {
+            // 按真实时间排序 (兼容 Z / +08:00 / 无时区), 最新在前
+            const timeValue = (post) => {
+                const t = String(post?.timestamp || '');
+                if (!t) return 0;
+                const dt = new Date(t.replace(/\.\d+/, '').replace('Z', 'Z'));
+                return Number.isNaN(dt.getTime()) ? 0 : dt.getTime();
+            };
+            return posts
+                .filter(post => post && post.content)
+                .sort((left, right) => timeValue(right) - timeValue(left));
+        }
+
+        function postAuthor(post) {
+            return post.source === 'alpha_engine' ? 'AlphaEngine' : 'B策略';
+        }
+
+        function renderPostItem(post) {
+            if (!post || !post.content) return '';
+            const typeLabel = post.type_label || post.post_type || '动态';
+            const typeCls = postTypeClass(post.post_type);
+            const timeText = formatPostTime(post.timestamp);
+            const author = postAuthor(post);
+            const handle = post.source === 'alpha_engine' ? '@AlphaEngine' : '@BStrategy';
+            const platform = post.platform === 'binance_square' ? 'Binance Square' : '策略动态';
+            const alphaValue = Number(post.alpha);
+            const alphaText = Number.isFinite(alphaValue)
+                ? `α ${alphaValue >= 0 ? '+' : ''}${alphaValue.toFixed(2)}`
+                : '';
+            const regimeText = post.regime ? String(post.regime) : '';
+            const contentText = String(post.content || '').trim();
+            const shown = contentText.length > 1200 ? contentText.slice(0, 1200) + '…' : contentText;
+            const postLink = post.post_url
+                ? `<a href="${escapeHtml(post.post_url)}" target="_blank" rel="noopener noreferrer"><i class="fa fa-external-link"></i><span>原帖</span></a>`
+                : '';
+
+            return `
+                <article class="post-feed-item">
+                    <div class="post-feed-author-row">
+                        <div class="post-feed-avatar" aria-hidden="true">B</div>
+                        <div class="post-feed-author-block">
+                            <div class="post-feed-author-line">
+                                <span class="post-feed-author-name">${escapeHtml(author)}</span>
+                                <span class="post-feed-verified" title="策略账号"><i class="fa fa-check"></i></span>
+                                <span class="post-feed-handle">${escapeHtml(handle)}</span>
+                                ${timeText ? `<span class="post-feed-time">· ${escapeHtml(timeText)}</span>` : ''}
+                            </div>
+                            <div class="post-feed-tag-row">
+                                <span class="post-feed-type ${typeCls}">${escapeHtml(typeLabel)}</span>
+                                <span class="post-feed-tag">${escapeHtml(platform)}</span>
+                                ${regimeText ? `<span class="post-feed-tag">· ${escapeHtml(regimeText)}</span>` : ''}
+                                ${alphaText ? `<span class="post-feed-tag">· ${escapeHtml(alphaText)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="post-feed-content">${escapeHtml(shown)}</div>
+                    <div class="post-feed-actions">
+                        <span><i class="fa fa-comment-o"></i><span>讨论</span></span>
+                        <span><i class="fa fa-retweet"></i><span>策略跟踪</span></span>
+                        <span><i class="fa fa-bar-chart"></i><span>复盘</span></span>
+                        ${postLink}
+                    </div>
+                </article>`;
+        }
+
+        function renderPostFeed() {
+            const container = document.getElementById('post-feed-container');
+            const countElement = document.getElementById('post-feed-count');
+            const loader = document.getElementById('post-feed-loader');
+            if (!container) return;
+
+            if (postFeedState.total > 0 && countElement) {
+                countElement.textContent = `共 ${postFeedState.total} 条`;
+            } else if (countElement) {
+                countElement.textContent = '';
+            }
+
+            if (postFeedState.posts.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8" id="post-feed-empty">暂无发帖记录</p>';
+            } else {
+                container.innerHTML = postFeedState.posts.map(renderPostItem).join('');
+            }
+
+            if (loader) {
+                loader.classList.toggle('is-loading', postFeedState.loading);
+                loader.classList.toggle('is-done', !postFeedState.hasMore && postFeedState.posts.length > 0);
+                loader.textContent = postFeedState.loading
+                    ? '正在加载更早动态…'
+                    : postFeedState.hasMore
+                        ? '继续下滑加载更早动态'
+                        : '已显示全部动态';
+            }
+        }
+
+        function updatePostFeed(data, reset = false) {
+            const incoming = Array.isArray(data?.post_feed) ? data.post_feed : [];
+            if (reset || !postFeedState.initialized) {
+                postFeedState.posts = sortPostsNewestFirst(incoming);
+            } else {
+                const merged = new Map(postFeedState.posts.map(post => [postKey(post), post]));
+                incoming.forEach(post => merged.set(postKey(post), post));
+                postFeedState.posts = sortPostsNewestFirst(Array.from(merged.values()));
+            }
+            postFeedState.total = Number(data?.post_feed_total ?? incoming.length) || 0;
+            postFeedState.hasMore = data?.post_feed_has_more !== undefined
+                ? Boolean(data.post_feed_has_more)
+                : postFeedState.posts.length < postFeedState.total;
+            postFeedState.before = postFeedState.posts.length
+                ? String(postFeedState.posts[postFeedState.posts.length - 1].timestamp || '')
+                : '';
+            postFeedState.initialized = true;
+            renderPostFeed();
+        }
+
+        async function loadMorePostFeed() {
+            if (postFeedState.loading || !postFeedState.hasMore) return;
+            postFeedState.loading = true;
+            renderPostFeed();
+            try {
+                const params = new URLSearchParams({limit: String(POST_PAGE_SIZE)});
+                if (postFeedState.before) params.set('before', postFeedState.before);
+                const response = await fetch(`/api/get_post_feed?${params.toString()}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                const olderPosts = Array.isArray(data.post_feed) ? data.post_feed : [];
+                const merged = new Map(postFeedState.posts.map(post => [postKey(post), post]));
+                olderPosts.forEach(post => merged.set(postKey(post), post));
+                postFeedState.posts = sortPostsNewestFirst(Array.from(merged.values()));
+                postFeedState.total = Number(data.post_feed_total) || postFeedState.total;
+                postFeedState.hasMore = Boolean(data.post_feed_has_more);
+                postFeedState.before = postFeedState.posts.length
+                    ? String(postFeedState.posts[postFeedState.posts.length - 1].timestamp || '')
+                    : '';
+            } catch (error) {
+                console.error('加载更多发帖动态失败:', error);
+            } finally {
+                postFeedState.loading = false;
+                renderPostFeed();
+            }
+        }
+
+        const postFeedContainer = document.getElementById('post-feed-container');
+        if (postFeedContainer) {
+            postFeedContainer.addEventListener('scroll', () => {
+                const nearBottom = postFeedContainer.scrollTop + postFeedContainer.clientHeight
+                    >= postFeedContainer.scrollHeight - 120;
+                if (nearBottom) loadMorePostFeed();
+            });
+        }
 
     </script>
 </body>

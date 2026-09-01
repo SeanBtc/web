@@ -15,7 +15,7 @@ import json
 import requests
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 import threading
 import time
 from flask_socketio import SocketIO
@@ -66,6 +66,201 @@ def load_alpha_engine_regime():
 
 def alpha_engine_regime_label(regime):
     return ALPHA_ENGINE_REGIME_LABELS.get(regime, '未知')
+
+
+# Promo 发帖归档目录 (只读, 不修改 Promo 项目)
+_promo_posts_dir = os.getenv('PROMO_POSTS_DIR', '').strip()
+if _promo_posts_dir:
+    promo_posts_dir = (
+        _promo_posts_dir
+        if os.path.isabs(_promo_posts_dir)
+        else os.path.abspath(os.path.join(os.path.dirname(__file__), _promo_posts_dir))
+    )
+else:
+    promo_posts_dir = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), '..', 'Promo', 'history', 'posts'
+    ))
+_promo_alpha_bridge_file = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', 'Promo', 'runtime', 'alphaengine_posts.jsonl'
+))
+
+# 帖子类型中文标签
+POST_TYPE_LABELS = {
+    'launch': '启动',
+    'regime_switch': '牛熊切换',
+    'open_position': '开仓',
+    'close_position': '平仓',
+    'cycle_summary': '周期总结',
+    'milestone': '里程碑',
+    'weekly_report': '周报',
+    'ai_regime_update': 'AI市场判断',
+    'alphaengine': 'Alpha分析',
+    'hot_content': '热点内容',
+}
+POST_FEED_PAGE_SIZE = 20
+
+
+def _read_jsonl_file(file_path, limit=None):
+    """读取 JSONL 文件, 返回 dict 列表。"""
+    items = []
+    if not os.path.exists(file_path):
+        return items
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    items.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    except OSError:
+        return items
+    if limit is not None and len(items) > limit:
+        items = items[-limit:]
+    return items
+
+
+def _parse_post_timestamp(value):
+    """解析发帖时间戳为可比较的 UTC datetime。
+
+    兼容多种格式: Z / +08:00 / +00:00 / 无时区 / 带毫秒。
+    解析失败返回 None (调用方回退字符串排序)。
+    """
+    raw_value = str(value or '').strip()
+    if not raw_value:
+        return None
+
+    # 规范化: Z 结尾 → +00:00 (fromisoformat 在旧版本不支持 Z)
+    text = raw_value
+    if text.endswith('Z') or text.endswith('z'):
+        text = text[:-1] + '+00:00'
+
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        # 尝试常见格式
+        for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
+            try:
+                parsed = datetime.strptime(text, fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            return None
+
+    # 无时区 → 视为 UTC
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    else:
+        parsed = parsed.astimezone(timezone.utc)
+    return parsed
+
+
+def _post_sort_key(post):
+    """发帖记录排序 key: 真实时间优先, 无法解析时回退字符串。"""
+    dt = _parse_post_timestamp(post.get('timestamp'))
+    if dt is not None:
+        return (0, dt.timestamp())
+    return (1, str(post.get('timestamp') or ''))
+
+
+def _normalize_post_record(record, source):
+    """把 Promo 归档记录 / AlphaEngine 桥记录规范化为前端展示结构。"""
+    if not isinstance(record, dict):
+        return None
+    timestamp = str(record.get('timestamp') or record.get('ts') or '').strip()
+    content = str(record.get('content') or '').strip()
+    if not content:
+        return None
+    post_type = str(record.get('post_type') or record.get('type') or 'alphaengine').strip()
+    label = str(record.get('label') or '').strip()
+    platform = str(record.get('platform') or 'alpha_engine').strip()
+    extra = record.get('extra') if isinstance(record.get('extra'), dict) else {}
+    return {
+        'timestamp': timestamp,
+        'date': str(record.get('date') or '')[:10],
+        'post_type': post_type,
+        'type_label': POST_TYPE_LABELS.get(post_type, post_type),
+        'label': label,
+        'content': content,
+        'platform': platform,
+        'success': bool(record.get('success', True)),
+        'post_id': str(record.get('post_id') or '').strip(),
+        'post_url': str(record.get('post_url') or '').strip(),
+        'alpha': extra.get('alpha'),
+        'regime': extra.get('new_regime') or extra.get('cycle') or '',
+        'source': source,
+    }
+
+
+def load_promo_posts(limit=200):
+    """加载发帖数据。
+
+    优先从本地 data/post_feed.json 读取 (用户可手动编辑管理)。
+    若文件不存在或为空, 回退从 Promo 归档 + AlphaEngine 桥文件回填生成。
+    """
+    local_file = os.path.join(data_dir, 'post_feed.json')
+    if os.path.exists(local_file):
+        try:
+            with open(local_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                posts = []
+                for record in data:
+                    item = _normalize_post_record(record, record.get('source', 'promo') if isinstance(record, dict) else 'promo')
+                    if item:
+                        posts.append(item)
+                posts.sort(key=_post_sort_key)
+                if limit is not None and len(posts) > limit:
+                    posts = posts[-limit:]
+                return posts
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f'[发帖] 读取本地发帖数据失败, 回退 Promo 归档: {exc}')
+
+    # 回退: 从 Promo 归档 + AlphaEngine 桥文件生成
+    posts = []
+    try:
+        if os.path.isdir(promo_posts_dir):
+            for fn in sorted(os.listdir(promo_posts_dir)):
+                if not fn.lower().endswith('.jsonl'):
+                    continue
+                file_path = os.path.join(promo_posts_dir, fn)
+                for record in _read_jsonl_file(file_path):
+                    item = _normalize_post_record(record, 'promo')
+                    if item:
+                        posts.append(item)
+    except OSError as exc:
+        print(f'[发帖] 读取 Promo 归档失败: {exc}')
+
+    # AlphaEngine 桥帖子
+    for record in _read_jsonl_file(_promo_alpha_bridge_file):
+        item = _normalize_post_record(record, 'alpha_engine')
+        if item:
+            posts.append(item)
+
+    # 按真实时间正序排序
+    posts.sort(key=_post_sort_key)
+    if limit is not None and len(posts) > limit:
+        posts = posts[-limit:]
+    return posts
+
+
+def save_post_feed(posts):
+    """保存发帖数据到本地 data/post_feed.json (用户可手动编辑管理)。"""
+    file_path = os.path.join(data_dir, 'post_feed.json')
+    _save_json_if_changed(file_path, posts, '发帖动态')
+
+
+def _post_feed_payload(posts, limit=POST_FEED_PAGE_SIZE):
+    posts = posts if isinstance(posts, list) else []
+    page = posts[-limit:] if limit > 0 else []
+    return {
+        'post_feed': page,
+        'post_feed_total': len(posts),
+        'post_feed_has_more': len(posts) > len(page),
+    }
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -797,6 +992,8 @@ def check_file_updates():
     last_modified_triangle_legacy = 0
     last_modified_lead = 0
     last_modified_arbitrage = 0
+    last_modified_promo_posts = 0
+    last_modified_promo_alpha = 0
     
     while True:
         try:
@@ -926,6 +1123,21 @@ def check_file_updates():
                     new_snapshot = json.dumps(data_storage.arbitrage_data, ensure_ascii=False, sort_keys=True)
                     if old_snapshot != new_snapshot:
                         print("套利策略数据已更新")
+
+            # 检查本地发帖数据文件 (用户手动编辑 post_feed.json 时刷新)
+            try:
+                post_feed_file = os.path.join(data_dir, 'post_feed.json')
+                if os.path.exists(post_feed_file):
+                    current_mtime = os.path.getmtime(post_feed_file)
+                    if current_mtime > last_modified_promo_posts:
+                        last_modified_promo_posts = current_mtime
+                        if data_storage.update_post_feed():
+                            socketio.emit('post_feed_update', {
+                                **_post_feed_payload(data_storage.post_feed),
+                            })
+                            print('发帖动态已更新 (本地文件)')
+            except Exception as exc:
+                print(f'检查发帖数据失败: {exc}')
 
             # 周期 GC：释放文件读取 / json 解析残留的临时 dict
             _now = time.monotonic()
@@ -1111,12 +1323,17 @@ global_data = {
         'top': top_file_data.get('status', '持仓'),
         'bottom': bottom_file_data.get('status', '清仓'),
     },
-    'market_data': {
+'market_data': {
         'cycle': alpha_engine_cycle,
         'alpha_engine_regime': alpha_engine_regime,
         'btc_price': 58000.0
-    }
+    },
+    'post_feed': load_promo_posts()
 }
+
+# 首次启动时, 若本地 post_feed.json 不存在, 保存一次回填数据
+if not os.path.exists(os.path.join(data_dir, 'post_feed.json')):
+    save_post_feed(global_data['post_feed'])
 
     # 数据存储类
 class DataStorage:
@@ -1131,6 +1348,7 @@ class DataStorage:
         self.bottom_data = global_data['bottom_data']
         self.strategy_status = global_data['strategy_status']
         self.market_data = global_data['market_data']
+        self.post_feed = global_data.get('post_feed', [])
         self.arbitrage_start_time = None  # 套利策略启动时间
         self._triangle_signal_ids = set()
         self._apply_memory_limits()
@@ -1549,6 +1767,44 @@ class DataStorage:
             self.market_data['btc_price'] = data['btc_price']
         self.update_global_data()
         return True
+
+    def update_post_feed(self):
+        """从本地 post_feed.json 重载发帖数据 (用户手动编辑后刷新)。"""
+        new_feed = load_promo_posts()
+        old_snapshot = json.dumps(self.post_feed, ensure_ascii=False, sort_keys=True)
+        new_snapshot = json.dumps(new_feed, ensure_ascii=False, sort_keys=True)
+        if old_snapshot != new_snapshot:
+            self.post_feed = new_feed
+            self.update_global_data()
+            return True
+        return False
+
+    def add_post_to_feed(self, post):
+        """接收一条新帖, 追加/去重到 post_feed, 保存并推送。"""
+        if not isinstance(post, dict):
+            return False
+        content = str(post.get('content') or '').strip()
+        if not content:
+            return False
+
+        item = _normalize_post_record(post, str(post.get('source') or 'promo').strip() or 'promo')
+        if not item:
+            return False
+
+        # 去重: 同 label + 同 timestamp + 同 post_type 视为重复
+        new_key = (str(item.get('label') or ''), str(item.get('timestamp') or ''), str(item.get('post_type') or ''))
+        for existing in self.post_feed:
+            ekey = (str(existing.get('label') or ''), str(existing.get('timestamp') or ''), str(existing.get('post_type') or ''))
+            if ekey == new_key:
+                return False
+
+        self.post_feed.append(item)
+        self.post_feed.sort(key=_post_sort_key)
+        if len(self.post_feed) > 500:
+            self.post_feed = self.post_feed[-500:]
+        save_post_feed(self.post_feed)
+        self.update_global_data()
+        return True
     
     def update_top_data(self, data):
         for key in ('position_status', 'position_quantity', 'position_avg_price', 'position_symbol', 'trade_records', 'status'):
@@ -1580,6 +1836,7 @@ class DataStorage:
             'bottom': self.bottom_data,
             'strategy_status': self.strategy_status,
             'market_data': self.market_data,
+            **_post_feed_payload(self.post_feed),
             'arbitrage_start_time': self.arbitrage_start_time
         }
 
@@ -1631,6 +1888,48 @@ def update_arbitrage_data():
         socketio.emit('all_data', data_storage.get_all_data())
         return jsonify({'status': 'success'})
     return jsonify({'status': 'error'}), 400
+
+@app.route('/api/update_post_feed', methods=['POST'])
+def update_post_feed():
+    """接收 Promo / AlphaEngine 推送的单条帖子, 保存到 post_feed.json 并推送前端。"""
+    data = request.json
+    if data and isinstance(data, dict):
+        added = data_storage.add_post_to_feed(data)
+        socketio.emit('post_feed_update', {
+            **_post_feed_payload(data_storage.post_feed),
+        })
+        return jsonify({'status': 'success', 'added': added})
+    return jsonify({'status': 'error'}), 400
+
+@app.route('/api/get_post_feed', methods=['GET'])
+def get_post_feed():
+    """分页读取发帖动态，默认返回最新 20 条，before 用于继续读取更早的帖子。"""
+    try:
+        limit = int(request.args.get('limit', POST_FEED_PAGE_SIZE))
+    except (TypeError, ValueError):
+        limit = POST_FEED_PAGE_SIZE
+    limit = max(1, min(limit, 50))
+    before = str(request.args.get('before') or '').strip()
+    posts = data_storage.post_feed if isinstance(data_storage.post_feed, list) else []
+
+    candidates = posts
+    if before:
+        # 按真实时间过滤: 只返回早于 before 时间戳的帖子
+        before_dt = _parse_post_timestamp(before)
+        if before_dt is not None:
+            candidates = [
+                post for post in posts
+                if _post_sort_key(post) < (0, before_dt.timestamp())
+            ]
+        else:
+            candidates = [post for post in posts if str(post.get('timestamp') or '') < before]
+
+    page = candidates[-limit:]
+    return jsonify({
+        'post_feed': page,
+        'post_feed_total': len(posts),
+        'post_feed_has_more': len(candidates) > len(page),
+    })
 
 @app.route('/api/get_data', methods=['GET'])
 def get_data():
