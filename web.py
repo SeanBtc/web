@@ -99,6 +99,9 @@ POST_TYPE_LABELS = {
 }
 POST_FEED_PAGE_SIZE = 20
 
+# 过滤掉的发帖类型 (如热点内容, 不展示不加载)
+POST_TYPE_EXCLUDED = {'hot_content', 'hot'}
+
 
 def _read_jsonl_file(file_path, limit=None):
     """读取 JSONL 文件, 返回 dict 列表。"""
@@ -167,14 +170,19 @@ def _post_sort_key(post):
 
 
 def _normalize_post_record(record, source):
-    """把 Promo 归档记录 / AlphaEngine 桥记录规范化为前端展示结构。"""
+    """把 Promo 归档记录 / AlphaEngine 桥记录规范化为前端展示结构。
+
+    热点内容 (hot_content) 等被排除的类型直接返回 None, 不加载不展示。
+    """
     if not isinstance(record, dict):
+        return None
+    post_type = str(record.get('post_type') or record.get('type') or 'alphaengine').strip()
+    if post_type.lower() in POST_TYPE_EXCLUDED:
         return None
     timestamp = str(record.get('timestamp') or record.get('ts') or '').strip()
     content = str(record.get('content') or '').strip()
     if not content:
         return None
-    post_type = str(record.get('post_type') or record.get('type') or 'alphaengine').strip()
     label = str(record.get('label') or '').strip()
     platform = str(record.get('platform') or 'alpha_engine').strip()
     extra = record.get('extra') if isinstance(record.get('extra'), dict) else {}
