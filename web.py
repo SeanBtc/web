@@ -64,6 +64,20 @@ def load_alpha_engine_regime():
         return ''
 
 
+def load_alpha_engine_alpha():
+    """只读 AlphaEngine 的 alpha.current，不修改其项目或状态文件。"""
+    try:
+        with open(alpha_engine_state_file, 'r', encoding='utf-8') as state_file:
+            state_data = json.load(state_file)
+        alpha_data = state_data.get('alpha', {}) if isinstance(state_data, dict) else {}
+        current = alpha_data.get('current') if isinstance(alpha_data, dict) else None
+        if current is None:
+            current = state_data.get('alpha', state_data.get('alpha.current'))
+        return float(current) if current is not None else 0.0
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return 0.0
+
+
 def alpha_engine_regime_label(regime):
     return ALPHA_ENGINE_REGIME_LABELS.get(regime, '未知')
 
@@ -1005,25 +1019,28 @@ def check_file_updates():
     
     while True:
         try:
-            # 只读 AlphaEngine 状态，并在其状态变更后推送新的中文阶段
+            # 只读 AlphaEngine 状态，并在其状态变更后推送新的中文阶段和alpha值
             if os.path.exists(alpha_engine_state_file):
                 current_modified = os.path.getmtime(alpha_engine_state_file)
                 if current_modified > last_modified_alpha_engine:
                     new_regime = load_alpha_engine_regime()
+                    new_alpha = load_alpha_engine_alpha()
                     if new_regime:
                         last_modified_alpha_engine = current_modified
                         new_cycle = alpha_engine_regime_label(new_regime)
                         if (data_storage.market_data.get('alpha_engine_regime') != new_regime
-                                or data_storage.market_data.get('cycle') != new_cycle):
+                                or data_storage.market_data.get('cycle') != new_cycle
+                                or abs(data_storage.market_data.get('alpha_engine_alpha', 0.0) - new_alpha) > 0.001):
                             data_storage.update_market_data({
                                 'cycle': new_cycle,
                                 'alpha_engine_regime': new_regime,
+                                'alpha_engine_alpha': new_alpha,
                             })
                             socketio.emit('market_update', {
                                 'market_data': data_storage.market_data,
                                 'strategy_status': data_storage.strategy_status,
                             })
-                            print(f'AlphaEngine 市场阶段已更新: {new_regime} -> {new_cycle}')
+                            print(f'AlphaEngine 已更新: {new_regime} -> {new_cycle}, alpha={new_alpha:+.4f}')
 
             # 检查总盈亏数据文件
             if os.path.exists(total_profit_file_path):
@@ -1184,6 +1201,7 @@ triangle_summary = triangle_data.get('summary', {
 
 alpha_engine_regime = load_alpha_engine_regime()
 alpha_engine_cycle = alpha_engine_regime_label(alpha_engine_regime)
+alpha_engine_alpha = load_alpha_engine_alpha()
 
 # 定期获取 BTC 价格（DataFeed 优先 → Binance API → CoinGecko 回退）
 def fetch_btc_price():
@@ -1334,6 +1352,7 @@ global_data = {
 'market_data': {
         'cycle': alpha_engine_cycle,
         'alpha_engine_regime': alpha_engine_regime,
+        'alpha_engine_alpha': alpha_engine_alpha,
         'btc_price': 58000.0
     },
     'post_feed': load_promo_posts()
@@ -1771,6 +1790,8 @@ class DataStorage:
             self.market_data['cycle'] = data['cycle']
         if 'alpha_engine_regime' in data:
             self.market_data['alpha_engine_regime'] = data['alpha_engine_regime']
+        if 'alpha_engine_alpha' in data:
+            self.market_data['alpha_engine_alpha'] = data['alpha_engine_alpha']
         if 'btc_price' in data:
             self.market_data['btc_price'] = data['btc_price']
         self.update_global_data()

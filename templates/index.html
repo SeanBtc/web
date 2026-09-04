@@ -149,6 +149,7 @@
             font-weight: 500;
         }
         #btc-price,
+        #alpha-value,
         #current-time {
             color: var(--text-primary) !important;
             letter-spacing: -0.01em;
@@ -657,6 +658,7 @@
             }
 
             #btc-price,
+            #alpha-value,
             #current-time {
                 font-size: 0.83rem !important;
                 line-height: 1.05rem;
@@ -1543,6 +1545,10 @@
                 <div class="flex items-center">
                     <span class="text-sm font-semibold text-gray-700 mr-2">价格:</span>
                     <span class="text-sm font-bold text-dark" id="btc-price">$68,888.00</span>
+                </div>
+                <div class="flex items-center ml-4">
+                    <span class="text-sm font-semibold text-gray-700 mr-2">α:</span>
+                    <span class="text-sm font-bold text-dark" id="alpha-value">+0.00</span>
                 </div>
             </div>
             <div class="flex items-center space-x-6">
@@ -3211,6 +3217,17 @@
                 }
             }
 
+            // 更新 Alpha 值
+            const alphaVal = Number(marketData.alpha_engine_alpha);
+            if (Number.isFinite(alphaVal)) {
+                const alphaElement = document.getElementById('alpha-value');
+                if (alphaElement) {
+                    const sign = alphaVal >= 0 ? '+' : '';
+                    alphaElement.textContent = `${sign}${alphaVal.toFixed(2)}`;
+                    alphaElement.className = `text-sm font-bold ${alphaVal > 0 ? 'text-green-600' : alphaVal < 0 ? 'text-red-600' : 'text-gray-500'}`;
+                }
+            }
+
             // 轻量行情更新也要同步刷新两个策略的浮盈
             refreshTopBottomFloatingProfits();
         }
@@ -3639,11 +3656,17 @@
 
         function formatPostTime(timestamp) {
             if (!timestamp) return '';
-            const text = String(timestamp).trim()
-                .replace('T', ' ')
-                .replace('Z', '')
-                .replace('+00:00', '');
-            return text.slice(0, 16);
+            const ts = String(timestamp).trim();
+            const dt = new Date(ts);
+            if (isNaN(dt.getTime())) return ts.slice(0, 16);
+            // 转换为 UTC+8 (北京时间)
+            const utc8 = new Date(dt.getTime() + 8 * 3600 * 1000);
+            const Y = utc8.getUTCFullYear();
+            const M = String(utc8.getUTCMonth() + 1).padStart(2, '0');
+            const D = String(utc8.getUTCDate()).padStart(2, '0');
+            const h = String(utc8.getUTCHours()).padStart(2, '0');
+            const m = String(utc8.getUTCMinutes()).padStart(2, '0');
+            return `${Y}-${M}-${D} ${h}:${m}`;
         }
 
         function escapeHtml(text) {
@@ -3684,7 +3707,8 @@ function sortPostsNewestFirst(posts) {
             const author = postAuthor(post);
             const handle = post.source === 'alpha_engine' ? '@AlphaEngine' : '@BStrategy';
             const platform = post.platform === 'binance_square' ? 'Binance Square' : '策略动态';
-            const alphaValue = Number(post.alpha);
+            const alphaRaw = post.alpha;
+            const alphaValue = (alphaRaw !== null && alphaRaw !== undefined && alphaRaw !== '') ? Number(alphaRaw) : NaN;
             const alphaText = Number.isFinite(alphaValue)
                 ? `α ${alphaValue >= 0 ? '+' : ''}${alphaValue.toFixed(2)}`
                 : '';
@@ -3716,8 +3740,6 @@ function sortPostsNewestFirst(posts) {
                     </div>
                     <div class="post-feed-content">${escapeHtml(shown)}</div>
                     <div class="post-feed-actions">
-                        <span><i class="fa fa-comment-o"></i><span>讨论</span></span>
-                        <span><i class="fa fa-retweet"></i><span>策略跟踪</span></span>
                         <span><i class="fa fa-bar-chart"></i><span>复盘</span></span>
                         ${postLink}
                     </div>
